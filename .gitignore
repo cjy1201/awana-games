@@ -1,0 +1,4 @@
+# AWANA 규칙서는 저작권 자료라 공개 저장소에 올리지 않아요
+*.pdf
+.DS_Store
+.claude/

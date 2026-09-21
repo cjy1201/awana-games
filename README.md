@@ -1,0 +1,16 @@
+# AWANA 게임
+
+AWANA Korea 게임 시간에 하는 게임을 태블릿에서 할 수 있게 만든 웹앱입니다.
+
+## 게임
+- **Sparks 단거리 이어달리기**: 네 팀(빨강·파랑·초록·노랑)이 태블릿 하나에 둘러앉아 버튼을 연타해서 겨뤄요. 배턴 존, 색깔 핀 실격, 가운데 종료 핀까지 AWANA 규칙을 그대로 옮겼어요.
+
+## 설치
+1. 태블릿 브라우저로 https://cjy1201.github.io/awana-games/ 를 열어요.
+2. iPad(Safari): 공유 → **홈 화면에 추가** / Android(Chrome): 메뉴 → **앱 설치**
+3. 한 번 열어두면 인터넷이 없어도 실행돼요.
+
+## 게임을 고친 뒤
+`sw.js`의 `VERSION`을 올려야 이미 설치한 기기에도 새 버전이 퍼져요.
+
+글꼴: [Jua](https://fonts.google.com/specimen/Jua) (SIL Open Font License, `fonts/OFL.txt`)
