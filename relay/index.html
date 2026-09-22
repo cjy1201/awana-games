@@ -345,7 +345,7 @@
       <div class="foul">
         <b>이러면 실격!</b>
         <ul>
-          <li>달리다가 원 위의 색깔 핀을 넘어뜨리면</li>
+          <li>달리다가 원 위의 색깔 핀을 넘어뜨리면 (빨리 지나갈수록 잘 넘어져요)</li>
           <li>배턴 존 밖에서 배턴을 넘기면 (경계선을 밟아도 실격)</li>
           <li>종료 핀을 슬라이딩이나 점프로 넘어뜨리면 (너무 빠르게 들어가면)</li>
           <li>배턴 없이 종료 핀을 넘어뜨리면 · 핀은 배턴을 들지 않은 손으로!</li>
@@ -369,6 +369,12 @@
           <span class="lbl">한 조 주자</span>
           <button class="chip" type="button" data-runners="5" aria-pressed="true">5명 (정식)</button>
           <button class="chip" type="button" data-runners="3" aria-pressed="false">3명 (연습)</button>
+        </div>
+        <div class="row" role="group" aria-label="핀 난이도">
+          <span class="lbl">핀 난이도</span>
+          <button class="chip" type="button" data-pinlevel="0" aria-pressed="false">쉬움</button>
+          <button class="chip" type="button" data-pinlevel="1" aria-pressed="true">보통</button>
+          <button class="chip" type="button" data-pinlevel="2" aria-pressed="false">어려움</button>
         </div>
       </div>
 
@@ -416,13 +422,16 @@
   const VMAX = TAU / 4.2;          // 최고 속도: 한 바퀴 약 4.2초
   const MIN_TAP_GAP = 55;
   const PIN_WARN = 0.55;           // 원 위 핀 이만큼 전부터 "조심!"
-  const PASS_MAX = VMAX * 0.8;     // 이보다 빠르게 핀 옆을 지나면 핀이 넘어져 실격
+  const PASS_MAX = VMAX * 0.8;     // 이보다 빠르게 핀 옆을 지나면 핀이 넘어질 수 있어요 (넘어지면 실격)
   const TURN_WARN = 0.8;           // 마지막 주자: 우리 팀 핀 돌기 전 "천천히!"
   const TURN_MAX = VMAX * 0.55;
   const FINISH_MAX = VMAX * 0.5;   // 종료 핀에 이보다 빠르게 닿으면 슬라이딩 실격
   const WALK = VMAX * 0.3;         // 핀 앞 경고 구간에서는 걸어서라도 가요
 
-  const settings = { teams: new Set(['red', 'blue', 'green', 'yellow']), runners: 5, heats: 2 };
+  const settings = { teams: new Set(['red', 'blue', 'green', 'yellow']), runners: 5, heats: 2, pinlevel: 1 };
+  // 너무 빠르게 핀 옆을 지날 때 넘어질 확률 (최고 속도일 때). 느릴수록 줄어요.
+  const PIN_CHANCE = [0.01, 0.03, 0.1];   // 쉬움 · 보통 · 어려움 (원 위 핀 옆을 지날 때)
+  const TURN_CHANCE = [0.08, 0.2, 0.5];    // 마지막 주자가 우리 팀 핀을 돌 때
   const match = { heat: 1, scores: {}, history: [] };
 
   const stage = document.getElementById('stage');
@@ -440,6 +449,7 @@
   let particles = [];
   let banner = { text: '', color: '#16224A', t: 0 };
   let state = {};
+  let wobble = {};              // 아슬아슬하게 지나가 흔들리는 핀 (팀 id → 1..0)
   let ringFall = {};            // 원 위 색깔 핀 넘어짐 (팀 id → 0..1, 없으면 서 있음)
 
   // ---------- 소리 ----------
@@ -469,6 +479,7 @@
     pass: () => [660, 880, 1100].forEach((f, i) => tone(f, 0.1, 'triangle', 0.08, i * 0.07)),
     last: () => [440, 554, 659].forEach((f, i) => tone(f, 0.12, 'square', 0.06, i * 0.09)),
     pin: () => { tone(120, 0.35, 'sawtooth', 0.09); [523, 659, 784, 1046, 1318].forEach((f, i) => tone(f, 0.2, 'square', 0.07, 0.15 + i * 0.11)); },
+    close: () => [300, 240].forEach((f, i) => tone(f, 0.09, 'triangle', 0.07, i * 0.09)),
     foul: () => { tone(150, 0.4, 'sawtooth', 0.07); tone(110, 0.4, 'sawtooth', 0.06, 0.2); },
   };
 
@@ -489,6 +500,8 @@
   function pinOf(t) { return at(t.angle, geo().C * 0.075); }
   // 원 위 색깔 핀: 서클 라인과 팀 대각선이 만나는 곳
   function ringPinOf(t) { return at(t.angle, geo().R); }
+  // ⑤ 대기 네모칸: 서클 라인 안쪽, 우리 팀 변 가운데 방향
+  const boxR = () => geo().R - geo().C * 0.04;
 
   // 마지막 주자 길: 우리 팀 핀을 오른쪽 바깥으로 돌아 → 원 안으로 → 대각선 따라 종료 핀까지
   let pathCache = { key: '', paths: {} };
@@ -560,8 +573,10 @@
       el.style.transform = `rotate(${t.rot}deg)`;
       const side = t.angle + Math.PI / 4;
       const out = S / 2 + btn * 0.15;
-      el.style.left = (left + S / 2 + Math.cos(side) * out - btn / 2) + 'px';
-      el.style.top = (top + S / 2 + Math.sin(side) * out - btn / 2) + 'px';
+      const along = side + Math.PI / 2;           // 변을 따라 (다음 팀 모서리 쪽)
+      const shift = Math.min(S * 0.3, S / 2 - btn * 0.55);
+      el.style.left = (left + S / 2 + Math.cos(side) * out + Math.cos(along) * shift - btn / 2) + 'px';
+      el.style.top = (top + S / 2 + Math.sin(side) * out + Math.sin(along) * shift - btn / 2) + 'px';
     });
   }
   addEventListener('resize', layout);
@@ -570,6 +585,7 @@
   function resetState() {
     state = {};
     ringFall = {};
+    wobble = {};
     TEAMS.forEach(t => {
       state[t.id] = {
         active: settings.teams.has(t.id),
@@ -684,6 +700,7 @@
   }
   chipGroup('runners', 'runners');
   chipGroup('heats', 'heats');
+  chipGroup('pinlevel', 'pinlevel');
   function toMenu() { resultEl.hidden = true; introEl.hidden = false; phase = 'intro'; match.heat = 1; resetState(); }
   document.getElementById('startBtn').addEventListener('click', startMatch);
   document.getElementById('nextBtn').addEventListener('click', () => {
@@ -764,9 +781,17 @@
           const ps = k * Math.PI / 2;
           if (prev < ps && st.s >= ps) {
             const limit = k === 4 ? TURN_MAX : PASS_MAX;
+            const owner = ringTeamAt(t, k % 4);
             if (st.v > limit) {
-              const owner = ringTeamAt(t, k % 4);
-              disqualify(t, k === 4 ? '우리 팀 핀을 돌다 넘어뜨림' : `${owner.name} 핀을 넘어뜨림`, owner);
+              const over = Math.min(1, (st.v - limit) / (VMAX - limit));
+              const chance = (k === 4 ? TURN_CHANCE : PIN_CHANCE)[settings.pinlevel] * (0.4 + 0.6 * over);
+              if (Math.random() < chance) {
+                disqualify(t, k === 4 ? '우리 팀 핀을 돌다 넘어뜨림' : `${owner.name} 핀을 넘어뜨림`, owner);
+              } else {
+                wobble[owner.id] = 1;
+                sfx.close();
+                say(`${t.name} 아슬아슬! 핀이 흔들려요`, t.color, 1.2);
+              }
             } else if (k === 4) {
               say(`${t.name} 핀 돌기 성공! 가운데로 살살`, t.color, 1.4);
             }
@@ -798,6 +823,7 @@
       const st = state[t.id];
       if (st.pinFall > 0) st.pinFall = Math.min(1, st.pinFall + dt * 3);
       if (ringFall[t.id] != null) ringFall[t.id] = Math.min(1, ringFall[t.id] + dt * 3);
+      if (wobble[t.id]) wobble[t.id] = Math.max(0, wobble[t.id] - dt * 1.2);
     });
     if (phase === 'over') {
       overT += dt;
@@ -945,11 +971,23 @@
         ctx.beginPath(); ctx.moveTo(at(a, R).x, at(a, R).y); ctx.lineTo(at(a, R + band).x, at(a, R + band).y);
         ctx.lineWidth = Math.max(3, C * 0.007); ctx.stroke();
       });
-      const lp = at(mid, R + band + C * 0.035);
-      ctx.save(); ctx.translate(lp.x, lp.y); ctx.rotate(mid + Math.PI / 2 + Math.PI);
+      const la = mid + ZW * 0.3;   // 가운데는 대기 줄 자리라 옆으로
+      const lp = at(la, R + band + C * 0.035);
+      ctx.save(); ctx.translate(lp.x, lp.y); ctx.rotate(la + Math.PI / 2 + Math.PI);
       ctx.fillStyle = t.id === 'yellow' ? '#8A6700' : t.dark;
       ctx.font = font(C * 0.03); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText('배턴 존', 0, 0);
+      ctx.restore();
+    });
+
+    // ⑤ 대기 네모칸: 서클 라인 안쪽
+    TEAMS.forEach(t => {
+      if (!on(t)) return;
+      const q = at(t.angle + ZC, boxR());
+      const h = C * 0.026;
+      ctx.save(); ctx.translate(q.x, q.y); ctx.rotate(t.angle + ZC);
+      ctx.strokeStyle = '#16224A'; ctx.lineWidth = 2;
+      ctx.strokeRect(-h, -h, h * 2, h * 2);
       ctx.restore();
     });
 
@@ -1013,14 +1051,14 @@
     ctx.bezierCurveTo(h * 0.26, -h * 0.4, h * 0.07, -h * 0.55, h * 0.08, -h * 0.7);
     ctx.closePath();
   }
-  function drawOnePin(x, y, h, color, fall, fallDir, glow, now) {
+  function drawOnePin(x, y, h, color, fall, fallDir, glow, now, shake = 0) {
     ctx.save();
     ctx.translate(x, y + h * 0.45);
     if (glow && !reduceMotion) {
       ctx.beginPath(); ctx.arc(0, -h * 0.45, h * (0.62 + Math.sin(now / 150) * 0.06), 0, TAU);
       ctx.fillStyle = glow; ctx.fill();
     }
-    ctx.rotate((Math.cos(fallDir) >= 0 ? 1 : -1) * (Math.PI / 2) * easeOut(fall));
+    ctx.rotate((Math.cos(fallDir) >= 0 ? 1 : -1) * (Math.PI / 2) * easeOut(fall) + (reduceMotion ? 0 : Math.sin(now / 45) * 0.35 * shake));
     pinShape(h); ctx.lineWidth = Math.max(3, h * 0.1); ctx.strokeStyle = '#16224A'; ctx.lineJoin = 'round'; ctx.stroke();
     pinShape(h); ctx.fillStyle = '#fff'; ctx.fill();
     ctx.fillStyle = color;
@@ -1052,7 +1090,7 @@
     });
     TEAMS.forEach(t => {
       const rp = ringPinOf(t);
-      drawOnePin(rp.x, rp.y, C * 0.055, t.color, ringFall[t.id] || 0, t.angle, glowOf[t.id], now);
+      drawOnePin(rp.x, rp.y, C * 0.055, t.color, ringFall[t.id] || 0, t.angle, glowOf[t.id], now, wobble[t.id] || 0);
     });
     // 종료 핀
     TEAMS.forEach(t => {
@@ -1118,11 +1156,12 @@
       const st = state[t.id];
       if (!st || !st.active) return;
       const racing = phase === 'race';
-      // 다음 주자: 배턴 존에서 기다리기
+      // 다음 주자: ⑤ 네모칸에서 기다리다가, 앞 주자가 가까워지면 배턴 존으로 나가요
+      const side = t.angle + Math.PI / 4;
       const next = st.runner + 1;
       if (next < settings.runners) {
-        const p = posOf(t, -ZC);
         const ready = racing && st.s > Z_START - 1.1;
+        const p = ready ? posOf(t, -ZC) : { ...at(side, boxR()), dir: side };
         let y = p.y;
         if (ready && !reduceMotion) y -= Math.abs(Math.sin(now / 90)) * size * 0.5;
         ctx.globalAlpha = ready ? 1 : 0.8;
@@ -1133,16 +1172,10 @@
         }
         ctx.globalAlpha = 1;
       }
-      // 나머지 친구들: 팀 구역에서 기다리기
-      const corner = cornerOf(t);
-      const side = t.angle + Math.PI / 4;
-      const mid = { x: c + Math.cos(side) * C / 2, y: c + Math.sin(side) * C / 2 };
-      const inward = side + Math.PI;
-      const nx = Math.cos(inward) * C * 0.04, ny = Math.sin(inward) * C * 0.04;
+      // 나머지 친구들: 네모칸 뒤로 한 줄 — 원 가운데 쪽으로
       for (let i = next + 1, k = 0; i < settings.runners; i++, k++) {
-        const f = 0.3 + k * 0.12;
-        const x = corner.x + (mid.x - corner.x) * f + nx, y = corner.y + (mid.y - corner.y) * f + ny;
-        drawRunner(t, x, y - size * 0.3, 0, size * 0.72, 0, { label: runnerNo(st, i), last: i === settings.runners - 1 });
+        const q = at(side, boxR() - size * 1.7 - k * size * 1.35);
+        drawRunner(t, q.x, q.y, side, size * 0.65, 0, { label: runnerNo(st, i), last: i === settings.runners - 1 });
       }
       // 경고 글자
       if (racing && st.warn && !st.dq) {
@@ -1195,11 +1228,11 @@
       const frac = countdownT - Math.floor(countdownT);
       const scale = reduceMotion ? 1 : 0.8 + frac * 0.4;
       ctx.font = font(C * 0.2 * scale);
-      ctx.lineWidth = C * 0.02; ctx.strokeStyle = '#fff'; ctx.strokeText(n, c, c - R * 0.45);
-      ctx.fillStyle = '#16224A'; ctx.fillText(n, c, c - R * 0.45);
+      ctx.lineWidth = C * 0.02; ctx.strokeStyle = '#fff'; ctx.strokeText(n, c, c);
+      ctx.fillStyle = '#16224A'; ctx.fillText(n, c, c);
       const sub = `${match.heat}조 · 출발 소리를 기다려요`;
       ctx.fillStyle = '#5A6689'; fitText(sub, R * 1.4, C * 0.04);
-      ctx.fillText(sub, c, c + R * 0.5);
+      ctx.fillText(sub, c, c + R * 0.4);
       return;
     }
     if (phase === 'race' || phase === 'over' || phase === 'result') {
@@ -1207,10 +1240,10 @@
       const text = showBanner ? banner.text : `${match.heat}조 · 톡톡! 빠르게`;
       fitText(text, R * 1.6, C * (showBanner ? 0.052 : 0.042));
       if (showBanner) {
-        ctx.lineWidth = C * 0.012; ctx.strokeStyle = '#fff'; ctx.strokeText(text, c, c - R * 0.52);
+        ctx.lineWidth = C * 0.012; ctx.strokeStyle = '#fff'; ctx.strokeText(text, c, c - R * 0.37);
       }
       ctx.fillStyle = showBanner ? (banner.color === '#F5C21B' ? '#B88A00' : banner.color) : 'rgba(22,34,74,.4)';
-      ctx.fillText(text, c, c - R * 0.52);
+      ctx.fillText(text, c, c - R * 0.37);
       const actives = TEAMS.filter(t => state[t.id].active);
       const order = actives.slice().sort((a, b) => {
         const A = state[a.id], B = state[b.id];
@@ -1218,10 +1251,15 @@
         if (A.rank || B.rank) return (A.rank || 99) - (B.rank || 99);
         return progressOf(B) - progressOf(A);
       });
-      const dot = C * 0.026, gap = C * 0.012;
-      const total = order.length * dot * 2 + (order.length - 1) * gap;
-      let x = c - total / 2 + dot;
-      const y = c + R * 0.5;
+      const dot = C * 0.022, gap = C * 0.01;
+      ctx.font = font(C * 0.026);
+      const label = '순위', lw = ctx.measureText(label).width + C * 0.015;
+      const total = lw + order.length * dot * 2 + (order.length - 1) * gap;
+      ctx.fillStyle = 'rgba(22,34,74,.45)'; ctx.textAlign = 'left';
+      const y = c + R * 0.38;
+      ctx.fillText(label, c - total / 2, y);
+      ctx.textAlign = 'center';
+      let x = c - total / 2 + lw + dot;
       order.forEach(t => {
         ctx.globalAlpha = state[t.id].dq ? 0.3 : 1;
         ctx.beginPath(); ctx.arc(x, y, dot, 0, TAU);
@@ -1229,9 +1267,6 @@
         x += dot * 2 + gap;
       });
       ctx.globalAlpha = 1;
-      ctx.fillStyle = 'rgba(22,34,74,.45)';
-      ctx.font = font(C * 0.026);
-      ctx.fillText('지금 순위', c, y + dot + C * 0.025);
     }
   }
 
