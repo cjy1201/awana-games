@@ -236,6 +236,12 @@
       tags: ['4팀', '2개 조', '1등 400점'], team: 'var(--red)', art: 'relay',
     },
     {
+      id: 'safari', ready: true, href: 'safari/',
+      club: 'Sparks', title: 'Sparks 사파리',
+      desc: '콩주머니를 머리에 얹고 한 바퀴! 떨어뜨리면 멈춰서 다시 얹고, 코치가 다음 친구에게 옮겨줘요.',
+      tags: ['4팀', '2개 조 · 3명', '1등 400점'], team: 'var(--green)', art: 'safari',
+    },
+    {
       id: 'ball-relay', club: 'Sparks', title: 'Sparks 볼 릴레이',
       desc: '팀 대각선에 한 줄로 서서 공을 전달해요.',
       tags: ['4팀', '11명'], team: 'var(--blue)', art: 'ball',
@@ -282,6 +288,15 @@
       <rect x="90" y="52.5" width="20" height="20" fill="#fff" stroke="#16224A" stroke-width="1.5"/>
       ${RUNNER(62, 36, '#E8403A')}${RUNNER(140, 50, '#2F6FE4')}${RUNNER(128, 96, '#1FA35A')}${RUNNER(66, 94, '#F5C21B')}
       ${PIN(100, 72, .55)}
+    </svg>`,
+    safari: `<svg viewBox="0 0 200 125" aria-hidden="true">
+      <path d="M20 112 Q100 60 180 112" stroke="#16224A" stroke-width="3" fill="none"/>
+      <rect x="126" y="70" width="30" height="30" fill="#fff" stroke="#16224A" stroke-width="2"/>
+      <circle cx="141" cy="85" r="11" fill="#16224A" stroke="#1FA35A" stroke-width="3"/>
+      <circle cx="70" cy="74" r="16" fill="#1FA35A" stroke="#fff" stroke-width="4"/>
+      <rect x="52" y="38" width="36" height="18" rx="7" fill="#1FA35A" stroke="#16224A" stroke-width="3" transform="rotate(-10 70 47)"/>
+      <path d="M40 40 q-8 6 0 12 M100 36 q8 6 0 12" stroke="#E8403A" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M58 90 l-8 16 M82 90 l8 16" stroke="#16224A" stroke-width="5" stroke-linecap="round"/>
     </svg>`,
     ball: `<svg viewBox="0 0 200 125" aria-hidden="true">
       <path d="M30 110 L170 20" stroke="#2F6FE4" stroke-width="4" stroke-linecap="round"/>
