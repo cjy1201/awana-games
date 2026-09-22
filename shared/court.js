@@ -41,8 +41,12 @@ window.Court = (() => {
   //   tap(t, st, el)   달리는 중 눌렀을 때,  press(id, down) 꾹 누르기 (있을 때만)
   //   race(dt)         달리는 중 매 프레임,  tick(dt) 매 프레임 (핀 넘어짐 등)
   //   draw(now)        트랙·핀·선수 그리기,  progress(st, t) 달리는 중 순위용 진행도
+  //   points      등수별 점수 (기본 [400, 200])
+  //   isOver()    경기가 끝났는지 (기본: 모든 팀이 끝나거나 실격). 한 팀만 이기면 끝나는 게임에서 써요
   function create(opts) {
     const settings = opts.settings;
+    const points = opts.points || POINTS;
+    const rankText = r => (r ? r + '등' : '—');   // 등수 없이 끝난 팀은 —
     const heatName = opts.heatName;
     const center = { top: 0.37, sub: 0.4, rank: 0.38, width: 1.6, subWidth: 1.4, ...opts.center };
 
@@ -385,7 +389,7 @@ window.Court = (() => {
       if (g.phase === 'race') {
         g.raceT += dt;
         opts.race(dt);
-        if (TEAMS.every(t => !g.state[t.id].active || g.state[t.id].finished || g.state[t.id].dq)) g.phase = 'over';
+        if (opts.isOver ? opts.isOver() : TEAMS.every(t => !g.state[t.id].active || g.state[t.id].finished || g.state[t.id].dq)) g.phase = 'over';
       }
       TEAMS.forEach(t => {
         const st = g.state[t.id];
@@ -416,7 +420,7 @@ window.Court = (() => {
       burst(p.x, p.y, t.color, st.rank === 1 ? 70 : 40);
       if (st.rank === 1) burst(p.x, p.y, '#FFFFFF', 30);
       sfx.pin();
-      const pts = POINTS[st.rank - 1];
+      const pts = points[st.rank - 1];
       say(`${t.name} ${st.rank}등!${pts ? ` +${pts}점` : ''}`, t.color, 2.2);
       updatePads();
     }
@@ -428,7 +432,7 @@ window.Court = (() => {
       const heatRow = {};
       actives.forEach(t => {
         const st = g.state[t.id];
-        const pts = st.dq ? 0 : (POINTS[st.rank - 1] || 0);
+        const pts = st.dq ? 0 : (points[st.rank - 1] || 0);
         heatRow[t.id] = { rank: st.rank, dq: st.dq, reason: st.dqReason, time: st.time, pts };
       });
       if (match.history.length < match.heat) {
@@ -446,13 +450,13 @@ window.Court = (() => {
         rows = actives.slice().sort((a, b) => (heatRow[a.id].dq - heatRow[b.id].dq) || ((heatRow[a.id].rank || 99) - (heatRow[b.id].rank || 99)))
           .map(t => {
             const h = heatRow[t.id];
-            return place(t, h.dq ? '실격' : h.rank + '등', h.dq ? h.reason : sub(t, h), `${h.pts}점`, h.dq);
+            return place(t, h.dq ? '실격' : rankText(h.rank), h.dq ? h.reason : sub(t, h), `${h.pts}점`, h.dq);
           });
       } else {
         titleEl.textContent = settings.heats > 1 ? '최종 점수' : '경기 결과';
         nextBtn.textContent = '처음부터 다시';
         // 점수 → 조별 순위 합(실격은 꼴찌 취급) 순으로 정렬
-        const tie = t => match.history.reduce((sum, h) => sum + (h[t.id].dq ? 9 : h[t.id].rank), 0);
+        const tie = t => match.history.reduce((sum, h) => sum + (h[t.id].dq || !h[t.id].rank ? 9 : h[t.id].rank), 0);
         const key = t => match.scores[t.id] * 100 - tie(t);
         const order = actives.slice().sort((a, b) => key(b) - key(a));
         rows = order.map(t => {
@@ -460,7 +464,7 @@ window.Court = (() => {
           const rk = order.findIndex(x => key(x) === key(t)) + 1;
           const parts = match.history.map((h, hi) => {
             const r = h[t.id];
-            return `${hi + 1}${heatName} ${r.dq ? '실격' : r.rank + '등'}`;
+            return `${hi + 1}${heatName} ${r.dq ? '실격' : rankText(r.rank)}`;
           }).join(' · ');
           return place(t, (same.length > 1 ? '공동 ' : '') + rk + '등', parts, `${match.scores[t.id]}점`, false);
         });
