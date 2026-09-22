@@ -32,9 +32,10 @@ body {
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
   overscroll-behavior: none;
-  touch-action: manipulation;
+  touch-action: none;          /* 두 손가락 확대·두 번 톡톡 확대 막기 */
 }
-#stage { position: fixed; inset: 0; }
+#stage { position: fixed; inset: 0; touch-action: none; }
+#court { touch-action: none; }
 #court {
   position: absolute;
   border-radius: 18px;
@@ -119,6 +120,7 @@ body {
 
 /* 오버레이 (게임 방법 / 결과) */
 .overlay {
+  touch-action: pan-y;   /* 설명·결과 창은 위아래로만 넘겨요 */
   position: absolute;
   inset: 0;
   z-index: 10;

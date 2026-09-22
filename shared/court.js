@@ -1,6 +1,25 @@
 // AWANA 게임 공통 부분: 게임 트랙(12m × 12m) 그리기, 네 팀 버튼, 소리, 조/회전 경기 진행.
 // 각 게임은 Court.create({...}) 에 자기 규칙(상태, 누르기, 진행, 그리기)만 넘기고, 마지막에 g.run() 을 불러요.
 // 빌드 없이 <script src="../shared/court.js"> 로 불러와요. 고치면 sw.js 의 VERSION 도 올려 주세요.
+// 태블릿에서 아이들이 여기저기 누르다 화면이 확대되지 않게 막아요.
+// (iPad Safari 는 viewport 의 user-scalable=no 를 무시해서 이렇게 따로 막아야 해요)
+function blockZoom() {
+  const stop = e => e.preventDefault();
+  // 두 손가락 확대 (Safari 전용 제스처 이벤트)
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach(ev => document.addEventListener(ev, stop, { passive: false }));
+  // 손가락 두 개 이상으로 움직일 때 (여러 팀이 동시에 누를 때도 확대로 오해하지 않게)
+  document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+  // 두 번 빠르게 톡톡 쳐서 확대 (설명 창처럼 넘겨보는 곳은 그대로 둬요)
+  let lastTouch = 0;
+  document.addEventListener('touchend', e => {
+    const now = Date.now();
+    if (now - lastTouch < 350 && !e.target.closest('.overlay')) e.preventDefault();
+    lastTouch = now;
+  }, { passive: false });
+  document.addEventListener('dblclick', stop, { passive: false });
+}
+blockZoom();
+
 window.Court = (() => {
   const TAU = Math.PI * 2;
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -316,10 +335,14 @@ window.Court = (() => {
       const el = pads[t.id];
       el.addEventListener('pointerdown', e => {
         e.preventDefault();
-        if (press) { el.setPointerCapture?.(e.pointerId); press(t.id, true); }
+        if (press) {
+          try { el.setPointerCapture?.(e.pointerId); } catch (err) {}
+          press(t.id, true);
+        }
         tap(t.id);
       });
-      if (press) ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => el.addEventListener(ev, () => press(t.id, false)));
+      // touchend 도 함께 봐요: 확대 막기 때문에 기본 동작을 막아도 손 뗀 걸 놓치지 않게
+      if (press) ['pointerup', 'pointercancel', 'lostpointercapture', 'touchend', 'touchcancel'].forEach(ev => el.addEventListener(ev, () => press(t.id, false)));
       el.addEventListener('contextmenu', e => e.preventDefault());
     });
     addEventListener('keydown', e => {
