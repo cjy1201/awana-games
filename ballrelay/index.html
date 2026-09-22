@@ -1,0 +1,1203 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Sparks 볼 릴레이</title>
+<meta name="description" content="AWANA Sparks 볼 릴레이 규칙을 그대로 옮긴 네 팀 게임: 다리 사이로 공을 넘겨요">
+<meta name="theme-color" content="#16224A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AWANA 게임">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" type="image/png" href="../icons/favicon.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="preload" href="../fonts/jua.woff" as="font" type="font/woff" crossorigin>
+<style>
+  /* 한 가지 세계(체육관 코트)로 고정한 단일 테마 */
+  @font-face {
+    font-family: "Jua";
+    src: url("../fonts/jua.woff") format("woff");
+    font-display: block;
+  }
+  :root {
+    --navy: #16224A;
+    --navy-2: #22315C;
+    --floor: #E8EEF5;
+    --ink: #16224A;
+    --paper: #FFFFFF;
+    --red: #E8403A;
+    --blue: #2F6FE4;
+    --green: #1FA35A;
+    --yellow: #F5C21B;
+    --display: "Jua", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    --body: "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+  }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--navy);
+    color: var(--paper);
+    font-family: var(--body);
+    overflow: hidden;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    overscroll-behavior: none;
+    touch-action: manipulation;
+  }
+  #stage { position: fixed; inset: 0; }
+  #court {
+    position: absolute;
+    border-radius: 18px;
+    box-shadow: 0 10px 40px rgba(0,0,0,.35);
+  }
+
+  /* 팀 버튼 */
+  .pad {
+    position: absolute;
+    border: 0;
+    padding: 0;
+    background: none;
+    touch-action: none;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+  }
+  .pad[hidden] { display: none !important; }
+  .pad-inner {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: var(--c);
+    box-shadow: 0 8px 0 var(--d), 0 12px 24px rgba(0,0,0,.35), inset 0 -6px 0 rgba(0,0,0,.08);
+    display: grid;
+    place-content: center;
+    gap: 4px;
+    text-align: center;
+    color: var(--t, #fff);
+    transition: transform .06s ease-out, box-shadow .06s ease-out;
+    position: relative;
+  }
+  .pad.hit .pad-inner {
+    transform: translateY(6px) scale(.96);
+    box-shadow: 0 2px 0 var(--d), 0 4px 10px rgba(0,0,0,.35), inset 0 -3px 0 rgba(0,0,0,.08);
+  }
+  .pad-name { font-family: var(--display); font-size: calc(var(--s) * .2); line-height: 1; }
+  .pad-state { font-family: var(--display); font-size: calc(var(--s) * .13); line-height: 1; opacity: .95; }
+  .pad-runners { display: flex; gap: 5px; justify-content: center; }
+  .pad-runners i {
+    width: calc(var(--s) * .075); height: calc(var(--s) * .075);
+    border-radius: 50%;
+    border: 2px solid currentColor;
+    opacity: .9;
+  }
+  .pad-runners i.done { background: currentColor; }
+  .pad-runners i.now { background: currentColor; animation: blink .5s steps(2) infinite; }
+  .pad.shake .pad-inner { animation: shake .35s; }
+  .pad.done .pad-inner { filter: saturate(.85); }
+  @keyframes blink { 50% { opacity: .25; } }
+  @keyframes shake {
+    20% { transform: translateX(-8px) rotate(-4deg); }
+    40% { transform: translateX(8px) rotate(4deg); }
+    60% { transform: translateX(-6px); }
+    80% { transform: translateX(6px); }
+  }
+  .pad:focus-visible .pad-inner { outline: 4px solid #fff; outline-offset: 4px; }
+
+  /* 상단 작은 버튼 */
+  #tools {
+    position: absolute;
+    top: calc(env(safe-area-inset-top, 0px) + 10px);
+    left: 12px;
+    display: flex;
+    gap: 8px;
+    z-index: 5;
+  }
+  .tool {
+    font-family: var(--display);
+    font-size: 16px;
+    border: 0;
+    border-radius: 999px;
+    padding: 8px 14px;
+    background: rgba(22,34,74,.85);
+    color: #fff;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+  .tool:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
+
+  /* 오버레이 (게임 방법 / 결과) */
+  .overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    background: rgba(12,19,44,.82);
+    display: grid;
+    place-items: center;
+    padding: 16px;
+    overflow-y: auto;
+  }
+  .sheet {
+    width: min(760px, 100%);
+    background: var(--paper);
+    color: var(--ink);
+    border-radius: 28px;
+    padding: 24px clamp(16px, 4vw, 32px) 28px;
+    display: grid;
+    gap: 18px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.4);
+  }
+  .sheet h1, .sheet h2 {
+    font-family: var(--display);
+    font-weight: 400;
+    margin: 0;
+    text-align: center;
+    text-wrap: balance;
+  }
+  .sheet h1 { font-size: clamp(30px, 6vw, 44px); line-height: 1.1; }
+  .sheet h1 .stripe { display: inline-flex; gap: 4px; vertical-align: middle; margin-inline: 6px; }
+  .sheet h1 .stripe b { width: 10px; height: 28px; border-radius: 4px; display: block; }
+  .sheet h2 { font-size: 22px; }
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+  }
+  .step {
+    background: var(--floor);
+    border-radius: 20px;
+    padding: 14px 12px 16px;
+    display: grid;
+    gap: 8px;
+    justify-items: center;
+    text-align: center;
+  }
+  .step svg { width: 96px; height: 96px; }
+  .step strong, .step span { word-break: keep-all; }
+  .step strong { font-family: var(--display); font-weight: 400; font-size: 21px; line-height: 1.2; }
+  .step span { font-size: 14px; line-height: 1.45; color: #3C4A70; }
+  .foul {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    font-size: 15px;
+    background: #FFF3F2;
+    color: #A2231E;
+    border-radius: 14px;
+    padding: 10px 14px;
+    text-align: center;
+  }
+  .foul b { font-family: var(--display); font-weight: 400; font-size: 18px; }
+  .settings { display: grid; gap: 10px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; }
+  .row > .lbl { font-weight: 700; font-size: 15px; margin-right: 4px; }
+  .chip {
+    font-family: var(--display);
+    font-size: 18px;
+    border-radius: 999px;
+    padding: 8px 16px;
+    border: 3px solid var(--c, var(--navy-2));
+    background: #fff;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .chip[aria-pressed="true"] { background: var(--c, var(--navy-2)); color: var(--t, #fff); }
+  .chip:focus-visible { outline: 3px solid var(--navy); outline-offset: 2px; }
+  .go {
+    font-family: var(--display);
+    font-size: 28px;
+    border: 0;
+    border-radius: 999px;
+    padding: 14px 40px;
+    background: var(--navy);
+    color: #fff;
+    cursor: pointer;
+    justify-self: center;
+    box-shadow: 0 6px 0 #0A1230;
+  }
+  .go:active { transform: translateY(4px); box-shadow: 0 2px 0 #0A1230; }
+  .go:focus-visible { outline: 4px solid var(--yellow); outline-offset: 3px; }
+  .keys { text-align: center; font-size: 13px; color: #6A7597; margin: 0; }
+  .buttons { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .go.ghost { background: var(--floor); color: var(--ink); box-shadow: 0 6px 0 #C4CFDD; }
+
+  .podium { display: grid; gap: 10px; }
+  .place {
+    display: grid;
+    grid-template-columns: 64px 1fr auto;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 18px;
+    background: var(--c);
+    color: var(--t, #fff);
+    font-family: var(--display);
+  }
+  .place .rk { font-size: 34px; text-align: center; }
+  .place.dq { opacity: .55; }
+  .place.dq .rk { font-size: 24px; }
+  .place .nm { font-size: 28px; }
+  .place .tm { font-size: 18px; font-variant-numeric: tabular-nums; opacity: .9; }
+  .place:first-child { transform: scale(1.03); box-shadow: 0 8px 24px rgba(0,0,0,.2); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pad-runners i.now, .pad.shake .pad-inner { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+
+
+<style>
+  .place .sub { display: block; font-family: var(--body); font-size: 14px; opacity: .85; margin-top: 2px; }
+  .place .tm { font-size: 24px; }
+  /* 공이 10명 중 어디까지 갔는지: 칸을 작게 */
+  .pad-runners { gap: 3px; }
+  .pad-runners i { width: calc(var(--s) * .05); height: calc(var(--s) * .05); border-width: 1.5px; }
+  .scoreline { text-align: center; font-size: 15px; margin: -6px 0 0; color: #3C4A70; }
+  .scoreline b { font-family: var(--display); font-weight: 400; font-size: 18px; color: var(--ink); }
+  .foul { display: grid; gap: 4px; text-align: left; justify-content: stretch; }
+  .foul ul { margin: 0; padding-left: 20px; display: grid; gap: 2px; }
+  .foul b { text-align: center; }
+</style>
+
+<div id="stage">
+  <canvas id="court" aria-label="AWANA 게임 트랙"></canvas>
+
+  <button class="pad" data-team="red" aria-label="빨강 팀 달리기 버튼"><div class="pad-inner"><span class="pad-name">빨강</span><span class="pad-runners"></span><span class="pad-state">준비</span></div></button>
+  <button class="pad" data-team="blue" aria-label="파랑 팀 달리기 버튼"><div class="pad-inner"><span class="pad-name">파랑</span><span class="pad-runners"></span><span class="pad-state">준비</span></div></button>
+  <button class="pad" data-team="green" aria-label="초록 팀 달리기 버튼"><div class="pad-inner"><span class="pad-name">초록</span><span class="pad-runners"></span><span class="pad-state">준비</span></div></button>
+  <button class="pad" data-team="yellow" aria-label="노랑 팀 달리기 버튼"><div class="pad-inner"><span class="pad-name">노랑</span><span class="pad-runners"></span><span class="pad-state">준비</span></div></button>
+
+  <div id="tools">
+    <a class="tool" href="../" aria-label="게임 모음으로">← 게임 모음</a>
+    <button class="tool" id="helpBtn" type="button">게임 방법</button>
+    <button class="tool" id="soundBtn" type="button" aria-pressed="true">소리 켜짐</button>
+  </div>
+
+  <!-- 게임 방법 + 설정 -->
+  <div class="overlay" id="intro">
+    <div class="sheet">
+      <h1>Sparks<span class="stripe" aria-hidden="true"><b style="background:var(--red)"></b><b style="background:var(--blue)"></b><b style="background:var(--green)"></b><b style="background:var(--yellow)"></b></span>볼 릴레이</h1>
+      <p class="scoreline">한 팀 <b>11명</b> (코치 + No1~No10, 마지막은 Sparks 선수) · <b>2번</b> 진행 · 1등 400점 · 2등 200점</p>
+
+      <div class="steps">
+        <div class="step">
+          <svg viewBox="0 0 96 96" aria-hidden="true">
+            <path d="M10 86 L86 10" stroke="#2F6FE4" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="72" cy="24" r="10" fill="#16224A" stroke="#2F6FE4" stroke-width="3"/>
+            <circle cx="56" cy="40" r="7" fill="#2F6FE4" stroke="#fff" stroke-width="2.5"/>
+            <circle cx="42" cy="54" r="7" fill="#2F6FE4" stroke="#fff" stroke-width="2.5"/>
+            <circle cx="28" cy="68" r="7" fill="#2F6FE4" stroke="#fff" stroke-width="2.5"/>
+            <circle cx="14" cy="82" r="7" fill="#2F6FE4" stroke="#fff" stroke-width="2.5"/>
+            <circle cx="74" cy="10" r="6" fill="#F08A24" stroke="#16224A" stroke-width="2"/>
+          </svg>
+          <strong>대각선에 한 줄로</strong>
+          <span>맨 앞은 공을 머리 위에 든 코치,<br>마지막 친구는 모서리 선 밖에</span>
+        </div>
+        <div class="step">
+          <svg viewBox="0 0 96 96" aria-hidden="true">
+            <circle cx="48" cy="48" r="30" fill="#E8403A"/>
+            <text x="48" y="56" text-anchor="middle" font-family="Jua, sans-serif" font-size="22" fill="#fff">톡!</text>
+            <circle cx="80" cy="18" r="8" fill="#F08A24" stroke="#16224A" stroke-width="2"/>
+            <path d="M66 24 q-8 4 -10 10" stroke="#16224A" stroke-width="2.5" fill="none" stroke-dasharray="3 3"/>
+          </svg>
+          <strong>공이 손에 닿으면 톡!</strong>
+          <span>다리 사이로 뒤 친구에게 넘겨요.<br>날아가는 중에 누르면 놓쳐요</span>
+        </div>
+        <div class="step">
+          <svg viewBox="0 0 96 96" aria-hidden="true">
+            <path d="M10 70 L86 30" stroke="#1FA35A" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="30" cy="60" r="8" fill="#1FA35A" stroke="#fff" stroke-width="2.5"/>
+            <circle cx="60" cy="44" r="8" fill="#1FA35A" stroke="#fff" stroke-width="2.5"/>
+            <circle cx="56" cy="80" r="8" fill="#F08A24" stroke="#16224A" stroke-width="2"/>
+            <path d="M46 54 q4 14 8 18" stroke="#16224A" stroke-width="2.5" fill="none" stroke-dasharray="3 3"/>
+            <path d="M52 20 a10 10 0 1 1 -8 16" stroke="#16224A" stroke-width="3" fill="none"/>
+            <path d="M44 36 l-2 -8 l8 1" stroke="#16224A" stroke-width="3" fill="none" stroke-linejoin="round"/>
+          </svg>
+          <strong>놓치면 빠진 곳부터</strong>
+          <span>공을 주워 와서<br>빠진 자리에서 다시 넘겨요</span>
+        </div>
+        <div class="step">
+          <svg viewBox="0 0 96 96" aria-hidden="true">
+            <path d="M10 86 Q30 40 58 48" fill="none" stroke="#F5C21B" stroke-width="3.5" stroke-dasharray="5 5"/>
+            <circle cx="16" cy="78" r="9" fill="#F5C21B" stroke="#fff" stroke-width="3"/>
+            <circle cx="24" cy="70" r="5" fill="#F08A24" stroke="#16224A" stroke-width="1.5"/>
+            <g transform="translate(70 70) rotate(24)">
+              <path d="M0 -24 m-5 0 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0 M-3 -18 h6 l3 10 q4 8 1 16 h-14 q-3 -8 1 -16 z" fill="#fff" stroke="#16224A" stroke-width="2.5" stroke-linejoin="round"/>
+            </g>
+          </svg>
+          <strong>마지막 친구는 핀까지!</strong>
+          <span>공을 손에 든 채 연타로 달려가<br>가운데 우리 팀 핀을 넘어뜨려요</span>
+        </div>
+      </div>
+
+      <div class="foul">
+        <b>이러면 실격!</b>
+        <ul>
+          <li>공을 바닥에 굴려서 넘기면</li>
+          <li>첫 선수(코치)와 마지막 선수가 공을 넘길 때 선을 밟으면</li>
+          <li>공은 모든 선수의 다리 사이로, 두 손에서 두 손으로 넘겨요</li>
+        </ul>
+      </div>
+
+      <div class="settings">
+        <div class="row" role="group" aria-label="참가 팀">
+          <span class="lbl">참가 팀</span>
+          <button class="chip" type="button" data-pick="red" aria-pressed="true" style="--c:var(--red)">빨강</button>
+          <button class="chip" type="button" data-pick="blue" aria-pressed="true" style="--c:var(--blue)">파랑</button>
+          <button class="chip" type="button" data-pick="green" aria-pressed="true" style="--c:var(--green)">초록</button>
+          <button class="chip" type="button" data-pick="yellow" aria-pressed="true" style="--c:var(--yellow);--t:#16224A">노랑</button>
+        </div>
+        <div class="row" role="group" aria-label="경기 횟수">
+          <span class="lbl">경기</span>
+          <button class="chip" type="button" data-heats="2" aria-pressed="true">2번 (정식)</button>
+          <button class="chip" type="button" data-heats="1" aria-pressed="false">1번</button>
+        </div>
+        <div class="row" role="group" aria-label="놓침 난이도">
+          <span class="lbl">공 놓침</span>
+          <button class="chip" type="button" data-fumble="0" aria-pressed="false">쉬움</button>
+          <button class="chip" type="button" data-fumble="1" aria-pressed="true">보통</button>
+          <button class="chip" type="button" data-fumble="2" aria-pressed="false">어려움</button>
+        </div>
+      </div>
+
+      <button class="go" id="startBtn" type="button">시작하기</button>
+      <p class="keys">버튼을 막 누르지 말고, 공이 손에 닿을 때마다 톡! · 키보드 연습: 빨강 Q · 파랑 P · 초록 M · 노랑 Z</p>
+    </div>
+  </div>
+
+  <!-- 결과 -->
+  <div class="overlay" id="result" hidden>
+    <div class="sheet">
+      <h2 id="resultTitle">경기 결과</h2>
+      <div class="podium" id="podium"></div>
+      <div class="buttons">
+        <button class="go" id="nextBtn" type="button">다음</button>
+        <button class="go ghost" id="menuBtn" type="button">설정 바꾸기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const TAU = Math.PI * 2;
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // AWANA 게임 트랙: 빨강 위, 파랑 오른쪽, 초록 아래, 노랑 왼쪽.
+  // angle = 그 팀 대각선 방향. 대각선이 원과 만나는 곳에 그 팀 색깔 핀, 그 바깥이 출발선.
+  const TEAMS = [
+    { id: 'red',    name: '빨강', color: '#E8403A', dark: '#A8231E', text: '#fff',    key: 'q', angle: -3 * Math.PI / 4, rot: 180, note: 523 },
+    { id: 'blue',   name: '파랑', color: '#2F6FE4', dark: '#1B47A3', text: '#fff',    key: 'p', angle: -Math.PI / 4,     rot: -90, note: 587 },
+    { id: 'green',  name: '초록', color: '#1FA35A', dark: '#12713C', text: '#fff',    key: 'm', angle: Math.PI / 4,      rot: 0,   note: 659 },
+    { id: 'yellow', name: '노랑', color: '#F5C21B', dark: '#B88A00', text: '#16224A', key: 'z', angle: 3 * Math.PI / 4,  rot: 90,  note: 698 },
+  ];
+  const POINTS = [400, 200];   // 조마다 1등, 2등 점수
+
+  // 한 줄: 0번 = 코치(맨 앞, 공을 머리 위에), 1~10번 = No1~No10 (10번 = 마지막 Sparks 선수)
+  const LINE = 11;
+  const PASS_TIME = 0.36;              // 공이 다리 사이로 뒤 친구에게 가는 시간(초)
+  // 공이 날아가는 앞부분(WAIT_PART)에 누르면 놓칠 수 있어요. 일찍 누를수록 잘 놓쳐요.
+  // 뒷부분에 누르면 닿자마자 다음 친구에게 넘겨요.
+  const WAIT_PART = 0.7;
+  const FUMBLE_CHANCE = [0.3, 0.55, 0.85];   // 쉬움 · 보통 · 어려움 (가장 이르게 눌렀을 때)
+  const FUMBLE_TIME = 1.4;             // 놓친 공을 주워 오는 시간(초)
+
+  // 마지막 선수 달리기
+  const DECAY = 1.6;
+  const MIN_TAP_GAP = 55;
+
+  const settings = { teams: new Set(['red', 'blue', 'green', 'yellow']), heats: 2, fumble: 1 };
+  const match = { heat: 1, scores: {}, history: [] };
+
+  const stage = document.getElementById('stage');
+  const canvas = document.getElementById('court');
+  const ctx = canvas.getContext('2d');
+  const introEl = document.getElementById('intro');
+  const resultEl = document.getElementById('result');
+  const pads = {};
+  document.querySelectorAll('.pad').forEach(el => { pads[el.dataset.team] = el; });
+
+  let S = 600, dpr = 1;
+  let phase = 'intro';          // intro | countdown | race | over | result
+  let countdownT = 0, raceT = 0, lastCount = null, overT = 0;
+  let rankCounter = 0;
+  let particles = [];
+  let banner = { text: '', color: '#16224A', t: 0 };
+  let state = {};
+
+  // ---------- 소리 ----------
+  let audio = null, soundOn = true;
+  function ac() {
+    if (!soundOn) return null;
+    try {
+      if (!audio) audio = new (window.AudioContext || window.webkitAudioContext)();
+      if (audio.state === 'suspended') audio.resume();
+    } catch (e) { return null; }
+    return audio;
+  }
+  function tone(freq, dur = 0.08, type = 'square', vol = 0.06, delay = 0) {
+    const a = ac(); if (!a) return;
+    const t0 = a.currentTime + delay;
+    const o = a.createOscillator(), g = a.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, t0);
+    g.gain.setValueAtTime(vol, t0);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g).connect(a.destination);
+    o.start(t0); o.stop(t0 + dur + 0.02);
+  }
+  const sfx = {
+    tap: n => tone(n, 0.04, 'triangle', 0.05),
+    count: () => tone(440, 0.18, 'square', 0.07),
+    go: () => tone(880, 0.4, 'square', 0.08),
+    pass: () => [660, 880, 1100].forEach((f, i) => tone(f, 0.1, 'triangle', 0.08, i * 0.07)),
+    last: () => [440, 554, 659].forEach((f, i) => tone(f, 0.12, 'square', 0.06, i * 0.09)),
+    pin: () => { tone(120, 0.35, 'sawtooth', 0.09); [523, 659, 784, 1046, 1318].forEach((f, i) => tone(f, 0.2, 'square', 0.07, 0.15 + i * 0.11)); },
+    drop: () => [520, 380, 260].forEach((f, i) => tone(f, 0.12, 'triangle', 0.08, i * 0.08)),
+    catch: n => tone(n * 1.5, 0.05, 'triangle', 0.06),
+    ok: () => [523, 784].forEach((f, i) => tone(f, 0.12, 'triangle', 0.08, i * 0.08)),
+    foul: () => { tone(150, 0.4, 'sawtooth', 0.07); tone(110, 0.4, 'sawtooth', 0.06, 0.2); },
+  };
+
+  // ---------- 경기장 치수 ----------
+  function geo() {
+    const m = S * 0.055;              // 바깥 팀 색 띠
+    const C = S - 2 * m;              // 12m × 12m 트랙
+    const c = S / 2;
+    const R = C * 0.37;               // 원 (서클 라인)
+    const band = C * 0.085;           // 달리는 길
+    const laneR = R + band * 0.5;
+    const box = C * 0.09;             // 가운데 사각형 반쪽
+    return { m, C, c, R, band, laneR, box };
+  }
+  const at = (a, r) => { const { c } = geo(); return { x: c + Math.cos(a) * r, y: c + Math.sin(a) * r }; };
+
+  // ③ 종료핀: 가운데 사각형 안, 우리 팀 대각선 위
+  function pinOf(t) { return at(t.angle, geo().C * 0.075); }
+
+  // i번째 선수 자리: 우리 팀 대각선 위, 코치는 가운데 사각형 바로 앞, 마지막은 트랙 모서리 선 밖
+  function spotOf(t, i) {
+    const { C, box } = geo();
+    const front = box * Math.SQRT2 + C * 0.04;
+    const back = C / Math.SQRT2 + C * 0.035;
+    return at(t.angle, front + (back - front) * i / (LINE - 1));
+  }
+
+  // 마지막 선수가 달리는 길: 줄 옆으로 돌아 우리 팀 삼각형 안의 핀까지
+  let pathCache = { key: '', paths: {} };
+  function runPath(t) {
+    const key = S + '';
+    if (pathCache.key !== key) pathCache = { key, paths: {} };
+    if (pathCache.paths[t.id]) return pathCache.paths[t.id];
+    const { C } = geo();
+    const P0 = spotOf(t, LINE - 1);
+    const P2 = at(t.angle + 0.18, C * 0.09);            // 우리 팀 삼각형 안, 핀 바로 옆
+    const side = t.angle + Math.PI / 2;                   // 줄에서 옆으로 비켜서
+    const mid = { x: (P0.x + P2.x) / 2 + Math.cos(side) * C * 0.09, y: (P0.y + P2.y) / 2 + Math.sin(side) * C * 0.09 };
+    const pts = [];
+    for (let i = 0; i <= 24; i++) {
+      const u = i / 24, v = 1 - u;
+      pts.push({ x: v * v * P0.x + 2 * v * u * mid.x + u * u * P2.x, y: v * v * P0.y + 2 * v * u * mid.y + u * u * P2.y });
+    }
+    const len = [0];
+    for (let i = 1; i < pts.length; i++) len.push(len[i - 1] + Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y));
+    return (pathCache.paths[t.id] = { pts, len, L: len[len.length - 1] });
+  }
+  function runPos(t, d) {
+    const { pts, len, L } = runPath(t);
+    d = Math.min(d, L);
+    let i = 1;
+    while (i < len.length - 1 && len[i] < d) i++;
+    const f = (d - len[i - 1]) / ((len[i] - len[i - 1]) || 1);
+    const a = pts[i - 1], b = pts[i];
+    return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f, dir: Math.atan2(b.y - a.y, b.x - a.x) };
+  }
+  const VMAX = () => geo().C * 0.32;     // 달리기 최고 속도 (px/초)
+
+  // ---------- 화면 배치 ----------
+  function layout() {
+    const W = stage.clientWidth, H = stage.clientHeight;
+    const minD = Math.min(W, H);
+    const btn = Math.max(84, Math.min(160, minD * 0.17));
+    S = Math.floor(Math.max(240, Math.min(W - btn * 1.3, H - btn * 1.3)));
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = S * dpr; canvas.height = S * dpr;
+    canvas.style.width = S + 'px'; canvas.style.height = S + 'px';
+    const left = (W - S) / 2, top = (H - S) / 2;
+    canvas.style.left = left + 'px';
+    canvas.style.top = top + 'px';
+    TEAMS.forEach(t => {
+      const el = pads[t.id];
+      el.style.width = el.style.height = btn + 'px';
+      el.style.setProperty('--s', btn + 'px');
+      el.style.setProperty('--c', t.color);
+      el.style.setProperty('--d', t.dark);
+      el.style.setProperty('--t', t.text);
+      el.style.transform = `rotate(${t.rot}deg)`;
+      const side = t.angle + Math.PI / 4;
+      const out = S / 2 + btn * 0.15;
+      const along = side + Math.PI / 2;           // 변을 따라 (다음 팀 모서리 쪽)
+      const shift = 0;   // 모서리 쪽은 마지막 선수 자리라 비워 둬요
+      // 화면 밖으로 나가지 않게
+      const bx = left + S / 2 + Math.cos(side) * out + Math.cos(along) * shift - btn / 2;
+      const by = top + S / 2 + Math.sin(side) * out + Math.sin(along) * shift - btn / 2;
+      el.style.left = Math.max(4, Math.min(W - btn - 4, bx)) + 'px';
+      el.style.top = Math.max(4, Math.min(H - btn - 4, by)) + 'px';
+    });
+  }
+  addEventListener('resize', layout);
+
+  // ---------- 게임 상태 ----------
+  function resetState() {
+    state = {};
+    TEAMS.forEach(t => {
+      state[t.id] = {
+        active: settings.teams.has(t.id),
+        holder: 0,                  // 공을 가진 선수 (0 = 코치)
+        flight: 0,                  // 공이 다음 선수에게 가는 중 0..1
+        queued: false,              // 닿자마자 다음으로 넘기기
+        fumble: 0, fumbleSide: 1,   // 놓친 공 주워 오는 중 0..1
+        running: false, d: 0, v: 0, legPhase: 0,
+        lastTap: 0, passes: 0, fumbles: 0,
+        rank: 0, finished: false, time: 0, pinFall: 0,
+        dq: false, dqReason: '', label: '',
+      };
+    });
+    rankCounter = 0; overT = 0; particles = []; raceT = 0;
+    banner = { text: '', color: '#16224A', t: 0 };
+    TEAMS.forEach(t => { pads[t.id].hidden = !state[t.id].active; });
+    updatePads();
+  }
+
+  // 게임 중에는 화면이 꺼지지 않게
+  let wakeLock = null;
+  async function keepAwake() {
+    try { if ('wakeLock' in navigator && !wakeLock) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } } catch (e) {}
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && phase !== 'intro') keepAwake();
+  });
+
+  function startMatch() {
+    keepAwake();
+    match.heat = 1; match.scores = {}; match.history = [];
+    TEAMS.forEach(t => { match.scores[t.id] = 0; });
+    startHeat();
+  }
+  function startHeat() {
+    resetState();
+    introEl.hidden = true; resultEl.hidden = true;
+    phase = 'countdown'; countdownT = 3.999; lastCount = null;
+    ac();
+  }
+
+  const who = i => (i === 0 ? '코치' : 'No' + i);
+
+  function padText(st) {
+    if (st.dq) return '실격';
+    if (st.rank) return st.rank + '등';
+    if (phase !== 'race') return match.heat + '회전 준비';
+    if (st.running) return '달려!';
+    if (st.fumble) return '놓쳤어요';
+    if (st.flight && st.flight < WAIT_PART) return '기다려…';
+    return '톡!';
+  }
+  function updatePads() {
+    TEAMS.forEach(t => {
+      const st = state[t.id]; if (!st) return;
+      const el = pads[t.id];
+      // 공이 몇 번째 친구까지 갔는지 (10칸)
+      let html = '';
+      for (let i = 1; i < LINE; i++) {
+        const cls = i <= st.holder ? 'done' : (i === st.holder + 1 && phase === 'race' && !st.running ? 'now' : '');
+        html += `<i class="${cls}"></i>`;
+      }
+      el.querySelector('.pad-runners').innerHTML = html;
+      st.label = padText(st);
+      el.querySelector('.pad-state').textContent = st.label;
+      el.classList.toggle('done', !!st.rank || st.dq);
+    });
+  }
+  function refreshPad(t) {
+    const st = state[t.id];
+    const text = padText(st);
+    if (text !== st.label) { st.label = text; pads[t.id].querySelector('.pad-state').textContent = text; }
+  }
+
+  function say(text, color, secs = 1.6) { banner = { text, color, t: secs }; }
+
+  function tap(id) {
+    const t = TEAMS.find(x => x.id === id);
+    const st = state[id];
+    if (!t || !st || !st.active) return;
+    const el = pads[id];
+    el.classList.add('hit');
+    clearTimeout(el._hit); el._hit = setTimeout(() => el.classList.remove('hit'), 70);
+
+    if (phase === 'countdown') {
+      el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake');
+      sfx.foul();
+      say(`${t.name}! 아직이에요`, t.color, 1.0);
+      return;
+    }
+    if (phase !== 'race' || st.finished || st.dq || st.fumble) return;
+    const now = performance.now();
+    if (now - st.lastTap < MIN_TAP_GAP) return;
+    st.lastTap = now;
+
+    if (st.running) {                           // 마지막 선수: 연타로 달리기
+      st.v = Math.min(VMAX(), st.v + VMAX() * 0.2);
+      sfx.tap(t.note);
+      return;
+    }
+    if (st.flight) {                            // 공이 날아가는 중
+      if (st.flight < WAIT_PART) {
+        const early = 1 - st.flight / WAIT_PART;
+        if (Math.random() < FUMBLE_CHANCE[settings.fumble] * (0.4 + 0.6 * early)) fumble(t);
+        else { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); }   // 아직이야!
+      } else st.queued = true;                  // 거의 닿았으면 닿자마자 넘겨요
+      return;
+    }
+    st.flight = 0.001;                          // 다리 사이로 뒤 친구에게
+    sfx.tap(t.note);
+  }
+  function press() {}
+
+  // ---------- 입력 ----------
+  TEAMS.forEach(t => {
+    const el = pads[t.id];
+    el.addEventListener('pointerdown', e => { e.preventDefault(); el.setPointerCapture?.(e.pointerId); press(t.id, true); tap(t.id); });
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => el.addEventListener(ev, () => press(t.id, false)));
+    el.addEventListener('contextmenu', e => e.preventDefault());
+  });
+  addEventListener('keydown', e => {
+    const t = TEAMS.find(x => x.key === e.key.toLowerCase());
+    if (!t) return;
+    press(t.id, true);
+    if (!e.repeat) tap(t.id);
+  });
+  addEventListener('keyup', e => {
+    const t = TEAMS.find(x => x.key === e.key.toLowerCase());
+    if (t) press(t.id, false);
+  });
+
+  document.querySelectorAll('[data-pick]').forEach(b => b.addEventListener('click', () => {
+    const id = b.dataset.pick;
+    if (settings.teams.has(id)) {
+      if (settings.teams.size <= 2) return;
+      settings.teams.delete(id);
+    } else settings.teams.add(id);
+    b.setAttribute('aria-pressed', settings.teams.has(id));
+    resetState();
+  }));
+  function chipGroup(attr, key) {
+    document.querySelectorAll(`[data-${attr}]`).forEach(b => b.addEventListener('click', () => {
+      settings[key] = +b.dataset[attr];
+      document.querySelectorAll(`[data-${attr}]`).forEach(x => x.setAttribute('aria-pressed', x === b));
+      resetState();
+    }));
+  }
+  chipGroup('heats', 'heats');
+  chipGroup('fumble', 'fumble');
+  function toMenu() { resultEl.hidden = true; introEl.hidden = false; phase = 'intro'; match.heat = 1; resetState(); }
+  document.getElementById('startBtn').addEventListener('click', startMatch);
+  document.getElementById('nextBtn').addEventListener('click', () => {
+    if (match.heat < settings.heats && match.history.length === match.heat) { match.heat++; startHeat(); }
+    else startMatch();
+  });
+  document.getElementById('menuBtn').addEventListener('click', toMenu);
+  document.getElementById('helpBtn').addEventListener('click', toMenu);
+  const soundBtn = document.getElementById('soundBtn');
+  soundBtn.addEventListener('click', () => {
+    soundOn = !soundOn;
+    soundBtn.textContent = soundOn ? '소리 켜짐' : '소리 꺼짐';
+    soundBtn.setAttribute('aria-pressed', soundOn);
+  });
+
+  // ---------- 진행 ----------
+  function burst(x, y, color, n = 26) {
+    if (reduceMotion) n = Math.ceil(n / 3);
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * TAU, sp = (0.15 + Math.random() * 0.35) * S;
+      particles.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 0.8 + Math.random() * 0.4, max: 1.2, color, r: 3 + Math.random() * 4 });
+    }
+  }
+
+  function progressOf(st) { return st.holder + (st.flight || 0) + (st.running ? 1 + st.d / (runPath(TEAMS.find(t => state[t.id] === st)).L || 1) * 3 : 0); }
+
+  function fumble(t) {
+    const st = state[t.id];
+    st.flight = 0; st.queued = false;
+    st.fumble = 0.001; st.fumbleSide = Math.random() < 0.5 ? 1 : -1;
+    st.fumbles++;
+    sfx.drop();
+    say(`${t.name} 공을 놓쳤어요! ${who(st.holder)}부터 다시`, t.color, 1.6);
+    updatePads();
+  }
+
+  function update(dt) {
+    if (phase === 'countdown') {
+      countdownT -= dt;
+      const n = Math.ceil(countdownT);
+      if (n !== lastCount) { lastCount = n; if (n > 0) sfx.count(); }
+      if (countdownT <= 0) {
+        phase = 'race';
+        sfx.go();
+        say(`${match.heat}회전 시작!`, '#16224A', 1.0);
+        updatePads();
+      }
+    }
+    if (phase === 'race') {
+      raceT += dt;
+      for (const t of TEAMS) {
+        const st = state[t.id];
+        if (!st.active || st.finished || st.dq) continue;
+
+        if (st.fumble) {                        // 놓친 공 주워 오기
+          st.fumble += dt / FUMBLE_TIME;
+          if (st.fumble >= 1) {
+            st.fumble = 0;
+            say(`${t.name} 공 찾았어요! ${who(st.holder)}부터`, t.color, 1.0);
+            updatePads();
+          }
+          continue;
+        }
+        if (st.flight) {                        // 공이 날아가는 중
+          st.flight += dt / PASS_TIME;
+          if (st.flight >= 1) {
+            st.flight = 0;
+            st.holder++;
+            st.passes++;
+            sfx.catch(t.note);
+            if (st.holder === LINE - 1) {
+              st.running = true; st.queued = false;
+              sfx.last();
+              say(`${t.name} No10 받았다! 핀까지 달려!`, t.color, 1.8);
+              updatePads();
+              continue;
+            }
+            if (st.queued) { st.queued = false; st.flight = 0.001; }
+            updatePads();
+          }
+          refreshPad(t);
+          continue;
+        }
+        if (st.running) {                       // 마지막 선수 달리기
+          st.v *= Math.exp(-DECAY * dt);
+          st.d += st.v * dt;
+          st.legPhase += st.v * dt * 0.14;
+          if (st.d >= runPath(t).L) { st.d = runPath(t).L; knockPin(t); continue; }
+        }
+        refreshPad(t);
+      }
+      if (TEAMS.every(t => !state[t.id].active || state[t.id].finished || state[t.id].dq)) phase = 'over';
+    }
+    TEAMS.forEach(t => {
+      const st = state[t.id];
+      if (st.pinFall > 0) st.pinFall = Math.min(1, st.pinFall + dt * 3);
+    });
+    if (phase === 'over') {
+      overT += dt;
+      if (overT > 2.2) showResult();
+    }
+    particles.forEach(p => {
+      p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt;
+      p.vx *= Math.exp(-3 * dt); p.vy *= Math.exp(-3 * dt);
+    });
+    particles = particles.filter(p => p.life > 0);
+    if (banner.t > 0) banner.t -= dt;
+  }
+
+  function knockPin(t) {
+    const st = state[t.id];
+    st.finished = true;
+    st.v = 0;
+    st.rank = ++rankCounter;
+    st.time = raceT;
+    st.pinFall = 0.001;
+    const p = pinOf(t);
+    burst(p.x, p.y, t.color, st.rank === 1 ? 70 : 40);
+    if (st.rank === 1) burst(p.x, p.y, '#FFFFFF', 30);
+    sfx.pin();
+    const pts = POINTS[st.rank - 1];
+    say(`${t.name} ${st.rank}등!${pts ? ` +${pts}점` : ''}`, t.color, 2.2);
+    updatePads();
+  }
+
+  function showResult() {
+    phase = 'result';
+    const actives = TEAMS.filter(t => state[t.id].active);
+    const heatRow = {};
+    actives.forEach(t => {
+      const st = state[t.id];
+      const pts = st.dq ? 0 : (POINTS[st.rank - 1] || 0);
+      heatRow[t.id] = { rank: st.rank, dq: st.dq, reason: st.dqReason, time: st.time, pts };
+    });
+    if (match.history.length < match.heat) {
+      match.history.push(heatRow);
+      actives.forEach(t => { match.scores[t.id] += heatRow[t.id].pts; });
+    }
+    const finalHeat = match.heat >= settings.heats;
+    const titleEl = document.getElementById('resultTitle');
+    const nextBtn = document.getElementById('nextBtn');
+    let rows;
+    if (!finalHeat) {
+      titleEl.textContent = `${match.heat}회전 결과`;
+      nextBtn.textContent = `${match.heat + 1}회전 준비`;
+      rows = actives.slice().sort((a, b) => (heatRow[a.id].dq - heatRow[b.id].dq) || ((heatRow[a.id].rank || 99) - (heatRow[b.id].rank || 99)))
+        .map(t => {
+          const h = heatRow[t.id];
+          return place(t, h.dq ? '실격' : h.rank + '등', h.dq ? h.reason : `${h.time.toFixed(1)}초 · 놓침 ${state[t.id].fumbles}번`, `${h.pts}점`, h.dq);
+        });
+    } else {
+      titleEl.textContent = settings.heats > 1 ? '최종 점수' : '경기 결과';
+      nextBtn.textContent = '처음부터 다시';
+      // 점수 → 회전별 순위 합(실격은 꼴찌 취급) 순으로 정렬
+      const tie = t => match.history.reduce((sum, h) => sum + (h[t.id].dq ? 9 : h[t.id].rank), 0);
+      const key = t => match.scores[t.id] * 100 - tie(t);
+      const order = actives.slice().sort((a, b) => key(b) - key(a));
+      rows = order.map(t => {
+        const same = order.filter(x => key(x) === key(t));
+        const rk = order.findIndex(x => key(x) === key(t)) + 1;
+        const parts = match.history.map((h, hi) => {
+          const r = h[t.id];
+          return `${hi + 1}회전 ${r.dq ? '실격' : r.rank + '등'}`;
+        }).join(' · ');
+        return place(t, (same.length > 1 ? '공동 ' : '') + rk + '등', parts, `${match.scores[t.id]}점`, false);
+      });
+    }
+    document.getElementById('podium').innerHTML = rows.join('');
+    resultEl.hidden = false;
+  }
+  function place(t, rk, sub, pts, dq) {
+    return `<div class="place${dq ? ' dq' : ''}" style="--c:${t.color};--t:${t.text}"><span class="rk">${rk}</span><span class="nm">${t.name} 팀<span class="sub">${sub}</span></span><span class="tm">${pts}</span></div>`;
+  }
+
+  // ---------- 그리기 ----------
+  function hexA(hex, a) {
+    const n = parseInt(hex.slice(1), 16);
+    return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`;
+  }
+  const font = px => `${Math.round(px)}px Jua, sans-serif`;
+  function cornerOf(t) {
+    const { C } = geo();
+    return at(t.angle, C / Math.SQRT2);
+  }
+
+  function drawCourt() {
+    const { m, C, c, R, band, box } = geo();
+    const on = t => state[t.id]?.active !== false;
+
+    ctx.fillStyle = '#DCE3EC';
+    ctx.fillRect(0, 0, S, S);
+    // 팀 색 띠 (변 바깥)
+    TEAMS.forEach(t => {
+      const a = cornerOf(t), next = cornerOf(TEAMS[(TEAMS.indexOf(t) + 1) % 4]);
+      const side = t.angle + Math.PI / 4;
+      const ox = Math.cos(side) * m, oy = Math.sin(side) * m;
+      ctx.fillStyle = on(t) ? t.color : hexA(t.color, 0.3);
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y); ctx.lineTo(next.x, next.y);
+      ctx.lineTo(next.x + ox, next.y + oy); ctx.lineTo(a.x + ox, a.y + oy);
+      ctx.closePath(); ctx.fill();
+    });
+    ctx.fillStyle = '#F2F5F9';
+    ctx.fillRect(m, m, C, C);
+    // 팀 구역
+    TEAMS.forEach(t => {
+      const a = cornerOf(t), next = cornerOf(TEAMS[(TEAMS.indexOf(t) + 1) % 4]);
+      ctx.fillStyle = hexA(t.color, on(t) ? 0.1 : 0.03);
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(next.x, next.y); ctx.lineTo(c, c); ctx.closePath(); ctx.fill();
+    });
+    ctx.strokeStyle = '#16224A'; ctx.lineWidth = 2;
+    ctx.strokeRect(m, m, C, C);
+
+    // 달리는 길
+    ctx.beginPath(); ctx.arc(c, c, R + band, 0, TAU); ctx.arc(c, c, R, 0, TAU, true);
+    ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fill();
+
+    // 대각선
+    TEAMS.forEach(t => {
+      const a = cornerOf(t), b = at(t.angle, box * Math.SQRT2);
+      ctx.strokeStyle = on(t) ? t.color : hexA(t.color, 0.3);
+      ctx.lineWidth = Math.max(3, C * 0.008); ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    });
+
+    // 서클 라인
+    ctx.beginPath(); ctx.arc(c, c, R, 0, TAU);
+    ctx.lineWidth = Math.max(4, C * 0.01); ctx.strokeStyle = '#16224A'; ctx.stroke();
+
+    // 가운데 사각형
+    const sq = [
+      ['red', c - box, c - box, c + box, c - box],
+      ['blue', c + box, c - box, c + box, c + box],
+      ['green', c + box, c + box, c - box, c + box],
+      ['yellow', c - box, c + box, c - box, c - box],
+    ];
+    ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.fillRect(c - box, c - box, box * 2, box * 2);
+    sq.forEach(([id, x1, y1, x2, y2]) => {
+      const t = TEAMS.find(x => x.id === id);
+      ctx.strokeStyle = on(t) ? t.color : hexA(t.color, 0.3);
+      ctx.lineWidth = Math.max(4, C * 0.011); ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+    });
+
+    ctx.lineCap = 'butt';
+  }
+
+  function pinShape(h) {
+    ctx.beginPath(); ctx.arc(0, -h * 0.82, h * 0.13, 0, TAU);
+    ctx.moveTo(-h * 0.08, -h * 0.7);
+    ctx.bezierCurveTo(-h * 0.07, -h * 0.55, -h * 0.26, -h * 0.4, -h * 0.2, -h * 0.02);
+    ctx.lineTo(h * 0.2, -h * 0.02);
+    ctx.bezierCurveTo(h * 0.26, -h * 0.4, h * 0.07, -h * 0.55, h * 0.08, -h * 0.7);
+    ctx.closePath();
+  }
+  function drawOnePin(x, y, h, color, fall, fallDir, glow, now, shake = 0) {
+    ctx.save();
+    ctx.translate(x, y + h * 0.45);
+    if (glow && !reduceMotion) {
+      ctx.beginPath(); ctx.arc(0, -h * 0.45, h * (0.62 + Math.sin(now / 150) * 0.06), 0, TAU);
+      ctx.fillStyle = glow; ctx.fill();
+    }
+    ctx.rotate((Math.cos(fallDir) >= 0 ? 1 : -1) * (Math.PI / 2) * easeOut(fall) + (reduceMotion ? 0 : Math.sin(now / 45) * 0.35 * shake));
+    pinShape(h); ctx.lineWidth = Math.max(3, h * 0.1); ctx.strokeStyle = '#16224A'; ctx.lineJoin = 'round'; ctx.stroke();
+    pinShape(h); ctx.fillStyle = '#fff'; ctx.fill();
+    ctx.fillStyle = color;
+    ctx.fillRect(-h * 0.1, -h * 0.66, h * 0.2, h * 0.06);
+    ctx.fillRect(-h * 0.13, -h * 0.57, h * 0.26, h * 0.06);
+    ctx.restore();
+  }
+  const easeOut = x => 1 - Math.pow(1 - x, 3);
+
+  function drawPins(now) {
+    const { C } = geo();
+    TEAMS.forEach(t => {
+      const st = state[t.id];
+      if (!st || !st.active) return;
+      const p = pinOf(t);
+      const goal = phase === 'race' && !st.finished && st.running;
+      drawOnePin(p.x, p.y, C * 0.075, t.color, st.pinFall, t.angle + Math.PI, goal ? hexA(t.color, 0.4) : null, now);
+    });
+  }
+
+  function drawRunner(t, x, y, dir, size, legPhase, opts = {}) {
+    const moving = opts.moving;
+    ctx.fillStyle = 'rgba(22,34,74,.18)';
+    ctx.beginPath(); ctx.ellipse(x, y + size * 0.9, size * 0.9, size * 0.35, 0, 0, TAU); ctx.fill();
+    if (moving && opts.speed > 0.55) {
+      ctx.strokeStyle = hexA(t.color, 0.45); ctx.lineWidth = 3; ctx.lineCap = 'round';
+      for (let i = -1; i <= 1; i++) {
+        const ox = x - Math.cos(dir) * size * 1.4 + Math.cos(dir + Math.PI / 2) * i * size * 0.5;
+        const oy = y - Math.sin(dir) * size * 1.4 + Math.sin(dir + Math.PI / 2) * i * size * 0.5;
+        const len = size * (0.6 + opts.speed);
+        ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(ox - Math.cos(dir) * len, oy - Math.sin(dir) * len); ctx.stroke();
+      }
+    }
+    const swing = moving ? Math.sin(legPhase) * size * 0.55 : 0;
+    ctx.strokeStyle = '#16224A'; ctx.lineWidth = Math.max(3, size * 0.22); ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x - size * 0.3, y + size * 0.5); ctx.lineTo(x - size * 0.3 + swing, y + size * 1.05);
+    ctx.moveTo(x + size * 0.3, y + size * 0.5); ctx.lineTo(x + size * 0.3 - swing, y + size * 1.05);
+    ctx.stroke();
+    ctx.globalAlpha *= opts.faded ? 0.45 : 1;
+    ctx.beginPath(); ctx.arc(x, y, size, 0, TAU);
+    ctx.fillStyle = t.color; ctx.fill();
+    ctx.lineWidth = Math.max(2, size * 0.18); ctx.strokeStyle = opts.last ? '#F5C21B' : '#fff'; ctx.stroke();
+    if (opts.baton) {
+      const bx = x + Math.cos(dir) * size * 1.05, by = y + Math.sin(dir) * size * 1.05;
+      ctx.save(); ctx.translate(bx, by); ctx.rotate(dir);
+      ctx.fillStyle = '#fff'; ctx.strokeStyle = '#16224A'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.roundRect(-size * 0.55, -size * 0.2, size * 1.1, size * 0.4, size * 0.15); ctx.fill(); ctx.stroke();
+      ctx.restore();
+    }
+    if (opts.label != null) {
+      ctx.fillStyle = t.text; ctx.font = font(size * (String(opts.label).length > 1 ? 0.9 : 1.1));
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(opts.label, x, y + size * 0.05);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function warnLabel(x, y, text, good) {
+    const { C } = geo();
+    ctx.font = font(C * 0.036); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.lineWidth = C * 0.01; ctx.strokeStyle = '#fff'; ctx.lineJoin = 'round';
+    ctx.strokeText(text, x, y);
+    ctx.fillStyle = good ? '#1FA35A' : '#E8403A';
+    ctx.fillText(text, x, y);
+  }
+
+  function drawBall(x, y, r) {
+    ctx.beginPath(); ctx.arc(x, y, r, 0, TAU);
+    ctx.fillStyle = '#F08A24'; ctx.fill();
+    ctx.lineWidth = Math.max(1.5, r * 0.22); ctx.strokeStyle = '#16224A'; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x - r, y); ctx.lineTo(x + r, y); ctx.moveTo(x, y - r); ctx.lineTo(x, y + r);
+    ctx.lineWidth = Math.max(1, r * 0.14); ctx.stroke();
+  }
+  function drawCoach(t, x, y, size) {
+    ctx.beginPath(); ctx.arc(x, y, size * 1.15, 0, TAU);
+    ctx.fillStyle = '#16224A'; ctx.fill();
+    ctx.lineWidth = Math.max(3, size * 0.28); ctx.strokeStyle = t.color; ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.font = font(size * 0.8);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('코치', x, y + size * 0.05);
+  }
+
+  function drawTeams(now) {
+    const { C, c } = geo();
+    const size = C * 0.02;
+    TEAMS.forEach(t => {
+      const st = state[t.id];
+      if (!st || !st.active) return;
+      const racing = phase === 'race';
+
+      // 한 줄로 선 선수들 (가운데를 봐요). 달려 나간 마지막 선수는 따로 그려요.
+      for (let i = LINE - 1; i >= 0; i--) {
+        if (i === LINE - 1 && st.running) continue;
+        const p = spotOf(t, i);
+        if (i === 0) { drawCoach(t, p.x, p.y, size); continue; }
+        const next = racing && !st.running && i === st.holder + 1;   // 공을 받을 친구
+        drawRunner(t, p.x, p.y, t.angle + Math.PI, size * (next ? 0.95 : 0.8), 0, { label: i, last: i === LINE - 1 });
+        if (next && st.flight >= WAIT_PART) {
+          ctx.strokeStyle = '#1FA35A'; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.arc(p.x, p.y, size * 1.7, 0, TAU); ctx.stroke();
+        }
+      }
+
+      // 공
+      const r = size * 0.62;
+      if (st.running || st.finished) {
+        const p = runPos(t, st.d);
+        drawRunner(t, p.x, p.y, p.dir, size, st.legPhase, { moving: racing && st.v > 1, speed: st.v / VMAX(), label: 10, last: true });
+        if (!st.finished) drawBall(p.x + Math.cos(p.dir) * size * 1.1, p.y + Math.sin(p.dir) * size * 1.1, r);
+      } else if (st.fumble) {
+        // 다리 사이에서 빠져나와 옆으로 굴러갔다가 주워 와요
+        const a = spotOf(t, st.holder), b = spotOf(t, st.holder + 1);
+        const side = t.angle + Math.PI / 2 * st.fumbleSide;
+        const out = Math.sin(Math.min(1, st.fumble) * Math.PI) * C * 0.1;
+        const mx = (a.x + b.x) / 2 + Math.cos(side) * out, my = (a.y + b.y) / 2 + Math.sin(side) * out;
+        drawBall(mx, my, r);
+        warnLabel(a.x + (c - a.x) * 0.25 + Math.cos(side) * C * 0.06, a.y + (c - a.y) * 0.25 + Math.sin(side) * C * 0.06, '놓쳤다!', false);
+      } else if (st.flight) {
+        // 다리 사이로: 가운데에서 작아졌다가 다시 커져요
+        const a = spotOf(t, st.holder), b = spotOf(t, st.holder + 1);
+        const u = Math.min(1, st.flight);
+        drawBall(a.x + (b.x - a.x) * u, a.y + (b.y - a.y) * u, r * (1 - 0.4 * Math.sin(u * Math.PI)));
+      } else {
+        const p = spotOf(t, st.holder);
+        const up = st.holder === 0 ? size * 1.5 : 0;                 // 코치는 공을 머리 위에
+        const back = st.holder === 0 ? 0 : size * 0.9;               // 다른 선수는 다리 뒤쪽에
+        drawBall(p.x + Math.cos(t.angle) * back, p.y + Math.sin(t.angle) * back - up, r * (st.holder === 0 ? 1.15 : 1));
+      }
+    });
+  }
+
+  function drawParticles() {
+    particles.forEach(p => {
+      ctx.globalAlpha = Math.max(0, p.life / p.max);
+      ctx.fillStyle = p.color;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, TAU); ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  function fitText(text, maxW, px) {
+    let fs = px;
+    ctx.font = font(fs);
+    while (ctx.measureText(text).width > maxW && fs > 10) { fs -= 1; ctx.font = font(fs); }
+  }
+
+  function drawCenter() {
+    const { c, R, C } = geo();
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round';
+    if (phase === 'countdown') {
+      const n = Math.ceil(countdownT);
+      const frac = countdownT - Math.floor(countdownT);
+      const scale = reduceMotion ? 1 : 0.8 + frac * 0.4;
+      ctx.font = font(C * 0.2 * scale);
+      ctx.lineWidth = C * 0.02; ctx.strokeStyle = '#fff'; ctx.strokeText(n, c, c);
+      ctx.fillStyle = '#16224A'; ctx.fillText(n, c, c);
+      const sub = `${match.heat}회전 · 출발 소리를 기다려요`;
+      ctx.fillStyle = '#5A6689'; fitText(sub, R * 1.15, C * 0.04);
+      ctx.fillText(sub, c, c + R * 0.72);
+      return;
+    }
+    if (phase === 'race' || phase === 'over' || phase === 'result') {
+      const showBanner = banner.t > 0;
+      const text = showBanner ? banner.text : `${match.heat}회전 · 공이 닿으면 톡!`;
+      fitText(text, R * 1.15, C * (showBanner ? 0.052 : 0.042));
+      if (showBanner) {
+        ctx.lineWidth = C * 0.012; ctx.strokeStyle = '#fff'; ctx.strokeText(text, c, c - R * 0.72);
+      }
+      ctx.fillStyle = showBanner ? (banner.color === '#F5C21B' ? '#B88A00' : banner.color) : 'rgba(22,34,74,.4)';
+      ctx.fillText(text, c, c - R * 0.72);
+      const actives = TEAMS.filter(t => state[t.id].active);
+      const order = actives.slice().sort((a, b) => {
+        const A = state[a.id], B = state[b.id];
+        if (A.dq !== B.dq) return A.dq ? 1 : -1;
+        if (A.rank || B.rank) return (A.rank || 99) - (B.rank || 99);
+        return progressOf(B) - progressOf(A);
+      });
+      const dot = C * 0.022, gap = C * 0.01;
+      ctx.font = font(C * 0.026);
+      const label = '순위', lw = ctx.measureText(label).width + C * 0.015;
+      const total = lw + order.length * dot * 2 + (order.length - 1) * gap;
+      ctx.fillStyle = 'rgba(22,34,74,.45)'; ctx.textAlign = 'left';
+      const y = c + R * 0.72;
+      ctx.fillText(label, c - total / 2, y);
+      ctx.textAlign = 'center';
+      let x = c - total / 2 + lw + dot;
+      order.forEach(t => {
+        ctx.globalAlpha = state[t.id].dq ? 0.3 : 1;
+        ctx.beginPath(); ctx.arc(x, y, dot, 0, TAU);
+        ctx.fillStyle = t.color; ctx.fill();
+        x += dot * 2 + gap;
+      });
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function draw(now) {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    drawCourt();
+    drawPins(now);
+    drawTeams(now);
+    drawParticles();
+    drawCenter();
+  }
+
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    update(dt);
+    draw(now);
+    requestAnimationFrame(frame);
+  }
+
+  layout();
+  resetState();
+  requestAnimationFrame(frame);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => draw(performance.now()));
+})();
+</script>
+<script>
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    addEventListener('load', () => navigator.serviceWorker.register('../sw.js', { scope: '../' }));
+  }
+</script>
+</body>
+</html>

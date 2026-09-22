@@ -1,6 +1,6 @@
 // 오프라인에서도 게임이 열리도록 파일을 기기에 저장해 둡니다.
 // 게임 파일을 고치면 VERSION 을 올려 주세요. 그래야 기존 기기에 새 버전이 퍼집니다.
-const VERSION = 'awana-v5';
+const VERSION = 'awana-v6';
 const FILES = [
   './',
   './index.html',
@@ -8,6 +8,8 @@ const FILES = [
   './relay/index.html',
   './safari/',
   './safari/index.html',
+  './ballrelay/',
+  './ballrelay/index.html',
   './manifest.webmanifest',
   './fonts/jua.woff',
   './icons/icon-192.png',
