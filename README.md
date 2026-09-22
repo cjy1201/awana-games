@@ -7,6 +7,7 @@ AWANA Korea 게임 시간에 하는 게임을 태블릿에서 할 수 있게 만
 - `relay/`: Sparks 단거리 이어달리기
 - `safari/`: Sparks 사파리
 - `ballrelay/`: Sparks 볼 릴레이
+- `shared/`: 세 게임이 함께 쓰는 부분. `court.js`는 트랙 그리기·팀 버튼·소리·조별 경기 진행, `court.css`는 공통 화면 모양이에요. 게임 파일에는 그 게임 규칙과 그리기만 남아 있어요.
 - 새 게임은 폴더를 하나 만들고 `GAMES`에 `ready: true`로 올린 뒤, `sw.js`의 `FILES`에도 추가해요.
 
 ## 게임

@@ -14,258 +14,9 @@
 <link rel="icon" type="image/png" href="../icons/favicon.png">
 <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
 <link rel="preload" href="../fonts/jua.woff" as="font" type="font/woff" crossorigin>
-<style>
-  /* 한 가지 세계(체육관 코트)로 고정한 단일 테마 */
-  @font-face {
-    font-family: "Jua";
-    src: url("../fonts/jua.woff") format("woff");
-    font-display: block;
-  }
-  :root {
-    --navy: #16224A;
-    --navy-2: #22315C;
-    --floor: #E8EEF5;
-    --ink: #16224A;
-    --paper: #FFFFFF;
-    --red: #E8403A;
-    --blue: #2F6FE4;
-    --green: #1FA35A;
-    --yellow: #F5C21B;
-    --display: "Jua", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
-    --body: "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
-  }
-  [hidden] { display: none !important; }
-  html, body { height: 100%; }
-  body {
-    margin: 0;
-    background: var(--navy);
-    color: var(--paper);
-    font-family: var(--body);
-    overflow: hidden;
-    -webkit-user-select: none;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none;
-    overscroll-behavior: none;
-    touch-action: manipulation;
-  }
-  #stage { position: fixed; inset: 0; }
-  #court {
-    position: absolute;
-    border-radius: 18px;
-    box-shadow: 0 10px 40px rgba(0,0,0,.35);
-  }
-
-  /* 팀 버튼 */
-  .pad {
-    position: absolute;
-    border: 0;
-    padding: 0;
-    background: none;
-    touch-action: none;
-    cursor: pointer;
-    font: inherit;
-    color: inherit;
-  }
-  .pad[hidden] { display: none !important; }
-  .pad-inner {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    background: var(--c);
-    box-shadow: 0 8px 0 var(--d), 0 12px 24px rgba(0,0,0,.35), inset 0 -6px 0 rgba(0,0,0,.08);
-    display: grid;
-    place-content: center;
-    gap: 4px;
-    text-align: center;
-    color: var(--t, #fff);
-    transition: transform .06s ease-out, box-shadow .06s ease-out;
-    position: relative;
-  }
-  .pad.hit .pad-inner {
-    transform: translateY(6px) scale(.96);
-    box-shadow: 0 2px 0 var(--d), 0 4px 10px rgba(0,0,0,.35), inset 0 -3px 0 rgba(0,0,0,.08);
-  }
-  .pad-name { font-family: var(--display); font-size: calc(var(--s) * .2); line-height: 1; }
-  .pad-state { font-family: var(--display); font-size: calc(var(--s) * .13); line-height: 1; opacity: .95; }
-  .pad-runners { display: flex; gap: 5px; justify-content: center; }
-  .pad-runners i {
-    width: calc(var(--s) * .075); height: calc(var(--s) * .075);
-    border-radius: 50%;
-    border: 2px solid currentColor;
-    opacity: .9;
-  }
-  .pad-runners i.done { background: currentColor; }
-  .pad-runners i.now { background: currentColor; animation: blink .5s steps(2) infinite; }
-  .pad.shake .pad-inner { animation: shake .35s; }
-  .pad.done .pad-inner { filter: saturate(.85); }
-  @keyframes blink { 50% { opacity: .25; } }
-  @keyframes shake {
-    20% { transform: translateX(-8px) rotate(-4deg); }
-    40% { transform: translateX(8px) rotate(4deg); }
-    60% { transform: translateX(-6px); }
-    80% { transform: translateX(6px); }
-  }
-  .pad:focus-visible .pad-inner { outline: 4px solid #fff; outline-offset: 4px; }
-
-  /* 상단 작은 버튼 */
-  #tools {
-    position: absolute;
-    top: calc(env(safe-area-inset-top, 0px) + 10px);
-    left: 12px;
-    display: flex;
-    gap: 8px;
-    z-index: 5;
-  }
-  .tool {
-    font-family: var(--display);
-    font-size: 16px;
-    border: 0;
-    border-radius: 999px;
-    padding: 8px 14px;
-    background: rgba(22,34,74,.85);
-    color: #fff;
-    cursor: pointer;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-  }
-  .tool:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
-
-  /* 오버레이 (게임 방법 / 결과) */
-  .overlay {
-    position: absolute;
-    inset: 0;
-    z-index: 10;
-    background: rgba(12,19,44,.82);
-    display: grid;
-    place-items: center;
-    padding: 16px;
-    overflow-y: auto;
-  }
-  .sheet {
-    width: min(760px, 100%);
-    background: var(--paper);
-    color: var(--ink);
-    border-radius: 28px;
-    padding: 24px clamp(16px, 4vw, 32px) 28px;
-    display: grid;
-    gap: 18px;
-    box-shadow: 0 20px 60px rgba(0,0,0,.4);
-  }
-  .sheet h1, .sheet h2 {
-    font-family: var(--display);
-    font-weight: 400;
-    margin: 0;
-    text-align: center;
-    text-wrap: balance;
-  }
-  .sheet h1 { font-size: clamp(30px, 6vw, 44px); line-height: 1.1; }
-  .sheet h1 .stripe { display: inline-flex; gap: 4px; vertical-align: middle; margin-inline: 6px; }
-  .sheet h1 .stripe b { width: 10px; height: 28px; border-radius: 4px; display: block; }
-  .sheet h2 { font-size: 22px; }
-  .steps {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 12px;
-  }
-  .step {
-    background: var(--floor);
-    border-radius: 20px;
-    padding: 14px 12px 16px;
-    display: grid;
-    gap: 8px;
-    justify-items: center;
-    text-align: center;
-  }
-  .step svg { width: 96px; height: 96px; }
-  .step strong, .step span { word-break: keep-all; }
-  .step strong { font-family: var(--display); font-weight: 400; font-size: 21px; line-height: 1.2; }
-  .step span { font-size: 14px; line-height: 1.45; color: #3C4A70; }
-  .foul {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
-    font-size: 15px;
-    background: #FFF3F2;
-    color: #A2231E;
-    border-radius: 14px;
-    padding: 10px 14px;
-    text-align: center;
-  }
-  .foul b { font-family: var(--display); font-weight: 400; font-size: 18px; }
-  .settings { display: grid; gap: 10px; }
-  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; }
-  .row > .lbl { font-weight: 700; font-size: 15px; margin-right: 4px; }
-  .chip {
-    font-family: var(--display);
-    font-size: 18px;
-    border-radius: 999px;
-    padding: 8px 16px;
-    border: 3px solid var(--c, var(--navy-2));
-    background: #fff;
-    color: var(--ink);
-    cursor: pointer;
-  }
-  .chip[aria-pressed="true"] { background: var(--c, var(--navy-2)); color: var(--t, #fff); }
-  .chip:focus-visible { outline: 3px solid var(--navy); outline-offset: 2px; }
-  .go {
-    font-family: var(--display);
-    font-size: 28px;
-    border: 0;
-    border-radius: 999px;
-    padding: 14px 40px;
-    background: var(--navy);
-    color: #fff;
-    cursor: pointer;
-    justify-self: center;
-    box-shadow: 0 6px 0 #0A1230;
-  }
-  .go:active { transform: translateY(4px); box-shadow: 0 2px 0 #0A1230; }
-  .go:focus-visible { outline: 4px solid var(--yellow); outline-offset: 3px; }
-  .keys { text-align: center; font-size: 13px; color: #6A7597; margin: 0; }
-  .buttons { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-  .go.ghost { background: var(--floor); color: var(--ink); box-shadow: 0 6px 0 #C4CFDD; }
-
-  .podium { display: grid; gap: 10px; }
-  .place {
-    display: grid;
-    grid-template-columns: 64px 1fr auto;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    border-radius: 18px;
-    background: var(--c);
-    color: var(--t, #fff);
-    font-family: var(--display);
-  }
-  .place .rk { font-size: 34px; text-align: center; }
-  .place.dq { opacity: .55; }
-  .place.dq .rk { font-size: 24px; }
-  .place .nm { font-size: 28px; }
-  .place .tm { font-size: 18px; font-variant-numeric: tabular-nums; opacity: .9; }
-  .place:first-child { transform: scale(1.03); box-shadow: 0 8px 24px rgba(0,0,0,.2); }
-
-  @media (prefers-reduced-motion: reduce) {
-    .pad-runners i.now, .pad.shake .pad-inner { animation: none; }
-  }
-</style>
+<link rel="stylesheet" href="../shared/court.css">
 </head>
 <body>
-
-
-
-<style>
-  .place .sub { display: block; font-family: var(--body); font-size: 14px; opacity: .85; margin-top: 2px; }
-  .place .tm { font-size: 24px; }
-  .scoreline { text-align: center; font-size: 15px; margin: -6px 0 0; color: #3C4A70; }
-  .scoreline b { font-family: var(--display); font-weight: 400; font-size: 18px; color: var(--ink); }
-  .foul { display: grid; gap: 4px; text-align: left; justify-content: stretch; }
-  .foul ul { margin: 0; padding-left: 20px; display: grid; gap: 2px; }
-  .foul b { text-align: center; }
-</style>
 
 <div id="stage">
   <canvas id="court" aria-label="AWANA 게임 트랙"></canvas>
@@ -396,23 +147,13 @@
   </div>
 </div>
 
+<script src="../shared/court.js"></script>
 <script>
 (() => {
-  const TAU = Math.PI * 2;
-  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  // AWANA 게임 트랙: 빨강 위, 파랑 오른쪽, 초록 아래, 노랑 왼쪽.
-  // angle = 그 팀 대각선 방향. 대각선이 원과 만나는 곳에 그 팀 색깔 핀, 그 바깥이 출발선.
-  const TEAMS = [
-    { id: 'red',    name: '빨강', color: '#E8403A', dark: '#A8231E', text: '#fff',    key: 'q', angle: -3 * Math.PI / 4, rot: 180, note: 523 },
-    { id: 'blue',   name: '파랑', color: '#2F6FE4', dark: '#1B47A3', text: '#fff',    key: 'p', angle: -Math.PI / 4,     rot: -90, note: 587 },
-    { id: 'green',  name: '초록', color: '#1FA35A', dark: '#12713C', text: '#fff',    key: 'm', angle: Math.PI / 4,      rot: 0,   note: 659 },
-    { id: 'yellow', name: '노랑', color: '#F5C21B', dark: '#B88A00', text: '#16224A', key: 'z', angle: 3 * Math.PI / 4,  rot: 90,  note: 698 },
-  ];
-  const POINTS = [400, 200];   // 조마다 1등, 2등 점수
+  const { TAU, reduceMotion, TEAMS, ZC, hexA, font } = Court;
 
   // 트랙 좌표 s: 출발선에서 시계 반대 방향으로 간 거리(라디안). 원 위 핀은 s = 0, π/2, π, 3π/2 에 있어요.
-  const ZC = Math.PI / 4;   // 배턴 존 가운데 = 출발선 45° 전 (우리 팀 변의 가운데)
+  // 배턴 존 가운데 = ZC (출발선 45° 전, 우리 팀 변의 가운데)
   const ZW = 0.66;          // 배턴 존 폭
   const Z_START = TAU - ZC - ZW / 2, Z_END = TAU - ZC + ZW / 2;
 
@@ -420,7 +161,6 @@
   const DECAY = 1.6;
   const BOOST = 0.3;
   const VMAX = TAU / 4.2;          // 최고 속도: 한 바퀴 약 4.2초
-  const MIN_TAP_GAP = 55;
   const PIN_WARN = 0.55;           // 원 위 핀 이만큼 전부터 "조심!"
   const PASS_MAX = VMAX * 0.8;     // 이보다 빠르게 핀 옆을 지나면 핀이 넘어질 수 있어요 (넘어지면 실격)
   const TURN_WARN = 0.8;           // 마지막 주자: 우리 팀 핀 돌기 전 "천천히!"
@@ -432,306 +172,40 @@
   // 너무 빠르게 핀 옆을 지날 때 넘어질 확률 (최고 속도일 때). 느릴수록 줄어요.
   const PIN_CHANCE = [0.01, 0.03, 0.1];   // 쉬움 · 보통 · 어려움 (원 위 핀 옆을 지날 때)
   const TURN_CHANCE = [0.08, 0.2, 0.5];    // 마지막 주자가 우리 팀 핀을 돌 때
-  const match = { heat: 1, scores: {}, history: [] };
 
-  const stage = document.getElementById('stage');
-  const canvas = document.getElementById('court');
-  const ctx = canvas.getContext('2d');
-  const introEl = document.getElementById('intro');
-  const resultEl = document.getElementById('result');
-  const pads = {};
-  document.querySelectorAll('.pad').forEach(el => { pads[el.dataset.team] = el; });
-
-  let S = 600, dpr = 1;
-  let phase = 'intro';          // intro | countdown | race | over | result
-  let countdownT = 0, raceT = 0, lastCount = null, overT = 0;
-  let rankCounter = 0;
-  let particles = [];
-  let banner = { text: '', color: '#16224A', t: 0 };
-  let state = {};
   let wobble = {};              // 아슬아슬하게 지나가 흔들리는 핀 (팀 id → 1..0)
   let ringFall = {};            // 원 위 색깔 핀 넘어짐 (팀 id → 0..1, 없으면 서 있음)
 
-  // ---------- 소리 ----------
-  let audio = null, soundOn = true;
-  function ac() {
-    if (!soundOn) return null;
-    try {
-      if (!audio) audio = new (window.AudioContext || window.webkitAudioContext)();
-      if (audio.state === 'suspended') audio.resume();
-    } catch (e) { return null; }
-    return audio;
-  }
-  function tone(freq, dur = 0.08, type = 'square', vol = 0.06, delay = 0) {
-    const a = ac(); if (!a) return;
-    const t0 = a.currentTime + delay;
-    const o = a.createOscillator(), g = a.createGain();
-    o.type = type; o.frequency.setValueAtTime(freq, t0);
-    g.gain.setValueAtTime(vol, t0);
-    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-    o.connect(g).connect(a.destination);
-    o.start(t0); o.stop(t0 + dur + 0.02);
-  }
-  const sfx = {
-    tap: n => tone(n, 0.04, 'triangle', 0.05),
-    count: () => tone(440, 0.18, 'square', 0.07),
-    go: () => tone(880, 0.4, 'square', 0.08),
-    pass: () => [660, 880, 1100].forEach((f, i) => tone(f, 0.1, 'triangle', 0.08, i * 0.07)),
-    last: () => [440, 554, 659].forEach((f, i) => tone(f, 0.12, 'square', 0.06, i * 0.09)),
-    pin: () => { tone(120, 0.35, 'sawtooth', 0.09); [523, 659, 784, 1046, 1318].forEach((f, i) => tone(f, 0.2, 'square', 0.07, 0.15 + i * 0.11)); },
-    close: () => [300, 240].forEach((f, i) => tone(f, 0.09, 'triangle', 0.07, i * 0.09)),
-    foul: () => { tone(150, 0.4, 'sawtooth', 0.07); tone(110, 0.4, 'sawtooth', 0.06, 0.2); },
-  };
-
-  // ---------- 경기장 치수 ----------
-  function geo() {
-    const m = S * 0.055;              // 바깥 팀 색 띠
-    const C = S - 2 * m;              // 12m × 12m 트랙
-    const c = S / 2;
-    const R = C * 0.37;               // 원 (서클 라인)
-    const band = C * 0.085;           // 달리는 길
-    const laneR = R + band * 0.5;
-    const box = C * 0.09;             // 가운데 사각형 반쪽
-    return { m, C, c, R, band, laneR, box };
-  }
-  const at = (a, r) => { const { c } = geo(); return { x: c + Math.cos(a) * r, y: c + Math.sin(a) * r }; };
-
-  // ③ 종료핀: 가운데 사각형 안, 우리 팀 대각선 위
-  function pinOf(t) { return at(t.angle, geo().C * 0.075); }
-  // 원 위 색깔 핀: 서클 라인과 팀 대각선이 만나는 곳
-  function ringPinOf(t) { return at(t.angle, geo().R); }
-  // ⑤ 대기 네모칸: 서클 라인 안쪽, 우리 팀 변 가운데 방향
-  const boxR = () => geo().R - geo().C * 0.04;
-
-  // 마지막 주자 길: 우리 팀 핀을 오른쪽 바깥으로 돌아 → 원 안으로 → 대각선 따라 종료 핀까지
-  let pathCache = { key: '', paths: {} };
-  function finalPath(t) {
-    const key = S + '';
-    if (pathCache.key !== key) pathCache = { key, paths: {} };
-    if (pathCache.paths[t.id]) return pathCache.paths[t.id];
-    const { R, laneR, C } = geo();
-    const A = t.angle;
-    const P0 = at(A, laneR);
-    const tan = A - Math.PI / 2;
-    const C1 = { x: P0.x + Math.cos(tan) * laneR * 0.34, y: P0.y + Math.sin(tan) * laneR * 0.34 };
-    const C2 = at(A - 0.34, R * 0.7);
-    const P3 = at(A, R * 0.6);
-    const pts = [];
-    for (let i = 0; i <= 24; i++) {
-      const u = i / 24, v = 1 - u;
-      pts.push({
-        x: v * v * v * P0.x + 3 * v * v * u * C1.x + 3 * v * u * u * C2.x + u * u * u * P3.x,
-        y: v * v * v * P0.y + 3 * v * v * u * C1.y + 3 * v * u * u * C2.y + u * u * u * P3.y,
-      });
-    }
-    pts.push(at(A, C * 0.075 + C * 0.035));
-    const len = [0];
-    for (let i = 1; i < pts.length; i++) len.push(len[i - 1] + Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y));
-    return (pathCache.paths[t.id] = { pts, len, L: len[len.length - 1] });
-  }
-
-  function posOf(t, s) {
-    const { laneR } = geo();
-    if (s <= TAU) {
-      const a = t.angle - s;
-      const p = at(a, laneR);
-      return { x: p.x, y: p.y, dir: a - Math.PI / 2 };
-    }
-    const { pts, len, L } = finalPath(t);
-    const d = Math.min((s - TAU) * laneR, L);
-    let i = 1;
-    while (i < len.length - 1 && len[i] < d) i++;
-    const f = (d - len[i - 1]) / ((len[i] - len[i - 1]) || 1);
-    const a = pts[i - 1], b = pts[i];
-    return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f, dir: Math.atan2(b.y - a.y, b.x - a.x) };
-  }
-  // 원 위 핀이 어느 팀 것인지: 출발선에서 k × 90° 간 곳
-  function ringTeamAt(t, k) {
-    const i = TEAMS.indexOf(t);
-    return TEAMS[((i - k) % 4 + 4) % 4];
-  }
-
-  // ---------- 화면 배치 ----------
-  function layout() {
-    const W = stage.clientWidth, H = stage.clientHeight;
-    const minD = Math.min(W, H);
-    const btn = Math.max(84, Math.min(160, minD * 0.17));
-    S = Math.floor(Math.max(240, Math.min(W - btn * 1.3, H - btn * 1.3)));
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = S * dpr; canvas.height = S * dpr;
-    canvas.style.width = S + 'px'; canvas.style.height = S + 'px';
-    const left = (W - S) / 2, top = (H - S) / 2;
-    canvas.style.left = left + 'px';
-    canvas.style.top = top + 'px';
-    TEAMS.forEach(t => {
-      const el = pads[t.id];
-      el.style.width = el.style.height = btn + 'px';
-      el.style.setProperty('--s', btn + 'px');
-      el.style.setProperty('--c', t.color);
-      el.style.setProperty('--d', t.dark);
-      el.style.setProperty('--t', t.text);
-      el.style.transform = `rotate(${t.rot}deg)`;
-      const side = t.angle + Math.PI / 4;
-      const out = S / 2 + btn * 0.15;
-      const along = side + Math.PI / 2;           // 변을 따라 (다음 팀 모서리 쪽)
-      const shift = Math.min(S * 0.3, S / 2 - btn * 0.55);
-      // 화면 밖으로 나가지 않게
-      const bx = left + S / 2 + Math.cos(side) * out + Math.cos(along) * shift - btn / 2;
-      const by = top + S / 2 + Math.sin(side) * out + Math.sin(along) * shift - btn / 2;
-      el.style.left = Math.max(4, Math.min(W - btn - 4, bx)) + 'px';
-      el.style.top = Math.max(4, Math.min(H - btn - 4, by)) + 'px';
-    });
-  }
-  addEventListener('resize', layout);
-
-  // ---------- 게임 상태 ----------
-  function resetState() {
-    state = {};
-    ringFall = {};
-    wobble = {};
-    TEAMS.forEach(t => {
-      state[t.id] = {
-        active: settings.teams.has(t.id),
-        runner: 0, s: 0, v: 0, legPhase: 0, lastTap: 0,
-        rank: 0, finished: false, time: 0, pinFall: 0,
-        dq: false, dqReason: '', warn: null,
-      };
-    });
-    rankCounter = 0; overT = 0; particles = []; raceT = 0;
-    banner = { text: '', color: '#16224A', t: 0 };
-    TEAMS.forEach(t => { pads[t.id].hidden = !state[t.id].active; });
-    updatePads();
-  }
-
-  // 게임 중에는 화면이 꺼지지 않게
-  let wakeLock = null;
-  async function keepAwake() {
-    try { if ('wakeLock' in navigator && !wakeLock) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } } catch (e) {}
-  }
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && phase !== 'intro') keepAwake();
+  const g = Court.create({
+    settings, chips: ['runners', 'heats', 'pinlevel'],
+    heatName: '조', goText: '출발!', idleText: '톡톡! 빠르게', nextReady: '출발 준비',
+    heatTitle: () => ` (No${runnerNo({ runner: 0 })}~No${runnerNo({ runner: settings.runners - 1 })})`,
+    teamState: () => ({ runner: 0, s: 0, v: 0, legPhase: 0, warn: null }),
+    onReset: () => { ringFall = {}; wobble = {}; },
+    padText: st => WARN_TEXT[st.warn] || (isLast(st) ? '핀까지!' : '톡톡!'),
+    tap, race, tick, draw,
+    progress: st => st.runner * TAU + st.s,
   });
-
-  function startMatch() {
-    keepAwake();
-    match.heat = 1; match.scores = {}; match.history = [];
-    TEAMS.forEach(t => { match.scores[t.id] = 0; });
-    startHeat();
-  }
-  function startHeat() {
-    resetState();
-    introEl.hidden = true; resultEl.hidden = true;
-    phase = 'countdown'; countdownT = 3.999; lastCount = null;
-    ac();
-  }
+  const { ctx, sfx, tone, geo, at, pinOf, ringPinOf, boxR, finalPath, posOf, ringTeamAt,
+          say, burst, updatePads, drawOnePin, drawRunner, warnLabel } = g;
+  sfx.close = () => [300, 240].forEach((f, i) => tone(f, 0.09, 'triangle', 0.07, i * 0.09));
 
   const isLast = st => st.runner === settings.runners - 1;
-  const runnerNo = (st, i = st.runner) => (match.heat - 1) * settings.runners + i + 1;   // 1조 No1~5, 2조 No6~10
+  const runnerNo = (st, i = st.runner) => (g.match.heat - 1) * settings.runners + i + 1;   // 1조 No1~5, 2조 No6~10
   const inZone = st => !isLast(st) && st.s >= Z_START && st.s <= Z_END;
 
   const WARN_TEXT = { pin: '조심!', turn: '천천히!', finish: '살살!', zone: '배턴!' };
-  function updatePads() {
-    TEAMS.forEach(t => {
-      const st = state[t.id]; if (!st) return;
-      const el = pads[t.id];
-      let html = '';
-      for (let i = 0; i < settings.runners; i++) {
-        const cls = i < st.runner ? 'done' : (i === st.runner && phase === 'race' ? 'now' : '');
-        html += `<i class="${cls}"></i>`;
-      }
-      el.querySelector('.pad-runners').innerHTML = html;
-      const stateEl = el.querySelector('.pad-state');
-      if (st.dq) stateEl.textContent = '실격';
-      else if (st.rank) stateEl.textContent = st.rank + '등';
-      else if (phase === 'race') stateEl.textContent = WARN_TEXT[st.warn] || (isLast(st) ? '핀까지!' : '톡톡!');
-      else stateEl.textContent = match.heat + '조 준비';
-      el.classList.toggle('done', !!st.rank || st.dq);
-    });
-  }
 
-  function say(text, color, secs = 1.6) { banner = { text, color, t: secs }; }
-
-  function tap(id) {
-    const t = TEAMS.find(x => x.id === id);
-    const st = state[id];
-    if (!t || !st || !st.active) return;
-    const el = pads[id];
-    el.classList.add('hit');
-    clearTimeout(el._hit); el._hit = setTimeout(() => el.classList.remove('hit'), 70);
-
-    if (phase === 'countdown') {
-      el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake');
-      sfx.foul();
-      say(`${t.name}! 아직이에요`, t.color, 1.0);
-      return;
-    }
-    if (phase !== 'race' || st.finished || st.dq) return;
-    const now = performance.now();
-    if (now - st.lastTap < MIN_TAP_GAP) return;
-    st.lastTap = now;
+  function tap(t, st) {
+    if (!g.tapGap(st)) return;
     if (inZone(st)) { handoff(t); return; }   // 배턴 존 안에서 누르면 배턴 터치
     st.v = Math.min(VMAX, st.v + BOOST);
     sfx.tap(t.note);
   }
 
-  // ---------- 입력 ----------
-  TEAMS.forEach(t => {
-    pads[t.id].addEventListener('pointerdown', e => { e.preventDefault(); tap(t.id); });
-    pads[t.id].addEventListener('contextmenu', e => e.preventDefault());
-  });
-  addEventListener('keydown', e => {
-    if (e.repeat) return;
-    const t = TEAMS.find(x => x.key === e.key.toLowerCase());
-    if (t) tap(t.id);
-  });
-
-  document.querySelectorAll('[data-pick]').forEach(b => b.addEventListener('click', () => {
-    const id = b.dataset.pick;
-    if (settings.teams.has(id)) {
-      if (settings.teams.size <= 2) return;
-      settings.teams.delete(id);
-    } else settings.teams.add(id);
-    b.setAttribute('aria-pressed', settings.teams.has(id));
-    resetState();
-  }));
-  function chipGroup(attr, key) {
-    document.querySelectorAll(`[data-${attr}]`).forEach(b => b.addEventListener('click', () => {
-      settings[key] = +b.dataset[attr];
-      document.querySelectorAll(`[data-${attr}]`).forEach(x => x.setAttribute('aria-pressed', x === b));
-      resetState();
-    }));
-  }
-  chipGroup('runners', 'runners');
-  chipGroup('heats', 'heats');
-  chipGroup('pinlevel', 'pinlevel');
-  function toMenu() { resultEl.hidden = true; introEl.hidden = false; phase = 'intro'; match.heat = 1; resetState(); }
-  document.getElementById('startBtn').addEventListener('click', startMatch);
-  document.getElementById('nextBtn').addEventListener('click', () => {
-    if (match.heat < settings.heats && match.history.length === match.heat) { match.heat++; startHeat(); }
-    else startMatch();
-  });
-  document.getElementById('menuBtn').addEventListener('click', toMenu);
-  document.getElementById('helpBtn').addEventListener('click', toMenu);
-  const soundBtn = document.getElementById('soundBtn');
-  soundBtn.addEventListener('click', () => {
-    soundOn = !soundOn;
-    soundBtn.textContent = soundOn ? '소리 켜짐' : '소리 꺼짐';
-    soundBtn.setAttribute('aria-pressed', soundOn);
-  });
-
   // ---------- 진행 ----------
-  function burst(x, y, color, n = 26) {
-    if (reduceMotion) n = Math.ceil(n / 3);
-    for (let i = 0; i < n; i++) {
-      const a = Math.random() * TAU, sp = (0.15 + Math.random() * 0.35) * S;
-      particles.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 0.8 + Math.random() * 0.4, max: 1.2, color, r: 3 + Math.random() * 4 });
-    }
-  }
-
-  function progressOf(st) { return st.runner * TAU + st.s; }
-
   function handoff(t) {
-    const st = state[t.id];
+    const st = g.state[t.id];
     st.runner++;
     st.s -= TAU;
     st.v *= 0.5;
@@ -755,109 +229,70 @@
     return null;
   }
 
-  function update(dt) {
-    if (phase === 'countdown') {
-      countdownT -= dt;
-      const n = Math.ceil(countdownT);
-      if (n !== lastCount) { lastCount = n; if (n > 0) sfx.count(); }
-      if (countdownT <= 0) {
-        phase = 'race';
-        sfx.go();
-        say(`${match.heat}조 출발!`, '#16224A', 1.0);
-        updatePads();
-      }
-    }
-    if (phase === 'race') {
-      raceT += dt;
-      const { laneR } = geo();
-      for (const t of TEAMS) {
-        const st = state[t.id];
-        if (!st.active || st.finished || st.dq) continue;
-        st.v *= Math.exp(-DECAY * dt);
-        if (st.warn && st.warn !== 'zone' && st.v < WALK) st.v = WALK;   // 손을 떼도 걸어서는 지나가요
-        const prev = st.s;
-        st.s += st.v * dt;
-        st.legPhase += st.v * dt * 14;
+  function race(dt) {
+    const { laneR } = geo();
+    for (const t of TEAMS) {
+      const st = g.state[t.id];
+      if (!st.active || st.finished || st.dq) continue;
+      st.v *= Math.exp(-DECAY * dt);
+      if (st.warn && st.warn !== 'zone' && st.v < WALK) st.v = WALK;   // 손을 떼도 걸어서는 지나가요
+      const prev = st.s;
+      st.s += st.v * dt;
+      st.legPhase += st.v * dt * 14;
 
-        // 원 위 색깔 핀 옆을 지날 때 (k = 0..3), 마지막 주자는 우리 팀 핀을 돌 때(k = 4)
-        for (let k = 0; k <= 4; k++) {
-          const ps = k * Math.PI / 2;
-          if (prev < ps && st.s >= ps) {
-            const limit = k === 4 ? TURN_MAX : PASS_MAX;
-            const owner = ringTeamAt(t, k % 4);
-            if (st.v > limit) {
-              const over = Math.min(1, (st.v - limit) / (VMAX - limit));
-              const chance = (k === 4 ? TURN_CHANCE : PIN_CHANCE)[settings.pinlevel] * (0.4 + 0.6 * over);
-              if (Math.random() < chance) {
-                disqualify(t, k === 4 ? '우리 팀 핀을 돌다 넘어뜨림' : `${owner.name} 핀을 넘어뜨림`, owner);
-              } else {
-                wobble[owner.id] = 1;
-                sfx.close();
-                say(`${t.name} 아슬아슬! 핀이 흔들려요`, t.color, 1.2);
-              }
-            } else if (k === 4) {
-              say(`${t.name} 핀 돌기 성공! 가운데로 살살`, t.color, 1.4);
+      // 원 위 색깔 핀 옆을 지날 때 (k = 0..3), 마지막 주자는 우리 팀 핀을 돌 때(k = 4)
+      for (let k = 0; k <= 4; k++) {
+        const ps = k * Math.PI / 2;
+        if (prev < ps && st.s >= ps) {
+          const limit = k === 4 ? TURN_MAX : PASS_MAX;
+          const owner = ringTeamAt(t, k % 4);
+          if (st.v > limit) {
+            const over = Math.min(1, (st.v - limit) / (VMAX - limit));
+            const chance = (k === 4 ? TURN_CHANCE : PIN_CHANCE)[settings.pinlevel] * (0.4 + 0.6 * over);
+            if (Math.random() < chance) {
+              disqualify(t, k === 4 ? '우리 팀 핀을 돌다 넘어뜨림' : `${owner.name} 핀을 넘어뜨림`, owner);
+            } else {
+              wobble[owner.id] = 1;
+              sfx.close();
+              say(`${t.name} 아슬아슬! 핀이 흔들려요`, t.color, 1.2);
             }
+          } else if (k === 4) {
+            say(`${t.name} 핀 돌기 성공! 가운데로 살살`, t.color, 1.4);
           }
         }
-        if (st.dq) continue;
-
-        // 배턴 존을 지나쳤으면 실격
-        if (!isLast(st) && st.s > Z_END) { disqualify(t, '배턴 존 밖에서 배턴 전달'); continue; }
-
-        // 종료 핀 도착
-        if (isLast(st) && st.s > TAU) {
-          const { L } = finalPath(t);
-          if ((st.s - TAU) * laneR >= L) {
-            st.s = TAU + L / laneR;
-            if (st.v > FINISH_MAX) {
-              state[t.id].pinFall = 0.001;
-              disqualify(t, '슬라이딩으로 종료 핀을 넘어뜨림');
-            } else knockPin(t);
-            continue;
-          }
-        }
-        const w = warnOf(st);
-        if (w !== st.warn) { st.warn = w; updatePads(); }
       }
-      if (TEAMS.every(t => !state[t.id].active || state[t.id].finished || state[t.id].dq)) phase = 'over';
+      if (st.dq) continue;
+
+      // 배턴 존을 지나쳤으면 실격
+      if (!isLast(st) && st.s > Z_END) { disqualify(t, '배턴 존 밖에서 배턴 전달'); continue; }
+
+      // 종료 핀 도착
+      if (isLast(st) && st.s > TAU) {
+        const { L } = finalPath(t);
+        if ((st.s - TAU) * laneR >= L) {
+          st.s = TAU + L / laneR;
+          if (st.v > FINISH_MAX) {
+            st.pinFall = 0.001;
+            disqualify(t, '슬라이딩으로 종료 핀을 넘어뜨림');
+          } else { st.warn = null; g.knockPin(t); }
+          continue;
+        }
+      }
+      const w = warnOf(st);
+      if (w !== st.warn) { st.warn = w; updatePads(); }
     }
+  }
+
+  // 원 위 핀이 넘어지고 흔들리는 모습
+  function tick(dt) {
     TEAMS.forEach(t => {
-      const st = state[t.id];
-      if (st.pinFall > 0) st.pinFall = Math.min(1, st.pinFall + dt * 3);
       if (ringFall[t.id] != null) ringFall[t.id] = Math.min(1, ringFall[t.id] + dt * 3);
       if (wobble[t.id]) wobble[t.id] = Math.max(0, wobble[t.id] - dt * 1.2);
     });
-    if (phase === 'over') {
-      overT += dt;
-      if (overT > 2.2) showResult();
-    }
-    particles.forEach(p => {
-      p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt;
-      p.vx *= Math.exp(-3 * dt); p.vy *= Math.exp(-3 * dt);
-    });
-    particles = particles.filter(p => p.life > 0);
-    if (banner.t > 0) banner.t -= dt;
-  }
-
-  function knockPin(t) {
-    const st = state[t.id];
-    st.finished = true;
-    st.v = 0; st.warn = null;
-    st.rank = ++rankCounter;
-    st.time = raceT;
-    st.pinFall = 0.001;
-    const p = pinOf(t);
-    burst(p.x, p.y, t.color, st.rank === 1 ? 70 : 40);
-    if (st.rank === 1) burst(p.x, p.y, '#FFFFFF', 30);
-    sfx.pin();
-    const pts = POINTS[st.rank - 1];
-    say(`${t.name} ${st.rank}등!${pts ? ` +${pts}점` : ''}`, t.color, 2.2);
-    updatePads();
   }
 
   function disqualify(t, reason, ringOwner) {
-    const st = state[t.id];
+    const st = g.state[t.id];
     st.dq = true; st.dqReason = reason; st.warn = null; st.v = 0;
     if (ringOwner && ringFall[ringOwner.id] == null) ringFall[ringOwner.id] = 0.001;
     const p = posOf(t, st.s);
@@ -867,99 +302,16 @@
     updatePads();
   }
 
-  function showResult() {
-    phase = 'result';
-    const actives = TEAMS.filter(t => state[t.id].active);
-    const heatRow = {};
-    actives.forEach(t => {
-      const st = state[t.id];
-      const pts = st.dq ? 0 : (POINTS[st.rank - 1] || 0);
-      heatRow[t.id] = { rank: st.rank, dq: st.dq, reason: st.dqReason, time: st.time, pts };
-    });
-    if (match.history.length < match.heat) {
-      match.history.push(heatRow);
-      actives.forEach(t => { match.scores[t.id] += heatRow[t.id].pts; });
-    }
-    const finalHeat = match.heat >= settings.heats;
-    const titleEl = document.getElementById('resultTitle');
-    const nextBtn = document.getElementById('nextBtn');
-    let rows;
-    if (!finalHeat) {
-      titleEl.textContent = `${match.heat}조 결과 (No${runnerNo({ runner: 0 })}~No${runnerNo({ runner: settings.runners - 1 })})`;
-      nextBtn.textContent = `${match.heat + 1}조 출발 준비`;
-      rows = actives.slice().sort((a, b) => (heatRow[a.id].dq - heatRow[b.id].dq) || ((heatRow[a.id].rank || 99) - (heatRow[b.id].rank || 99)))
-        .map(t => {
-          const h = heatRow[t.id];
-          return place(t, h.dq ? '실격' : h.rank + '등', h.dq ? h.reason : `${h.time.toFixed(1)}초`, `${h.pts}점`, h.dq);
-        });
-    } else {
-      titleEl.textContent = settings.heats > 1 ? '최종 점수' : '경기 결과';
-      nextBtn.textContent = '처음부터 다시';
-      // 점수 → 조별 순위 합(실격은 꼴찌 취급) 순으로 정렬
-      const tie = t => match.history.reduce((sum, h) => sum + (h[t.id].dq ? 9 : h[t.id].rank), 0);
-      const key = t => match.scores[t.id] * 100 - tie(t);
-      const order = actives.slice().sort((a, b) => key(b) - key(a));
-      rows = order.map(t => {
-        const same = order.filter(x => key(x) === key(t));
-        const rk = order.findIndex(x => key(x) === key(t)) + 1;
-        const parts = match.history.map((h, hi) => {
-          const r = h[t.id];
-          return `${hi + 1}조 ${r.dq ? '실격' : r.rank + '등'}`;
-        }).join(' · ');
-        return place(t, (same.length > 1 ? '공동 ' : '') + rk + '등', parts, `${match.scores[t.id]}점`, false);
-      });
-    }
-    document.getElementById('podium').innerHTML = rows.join('');
-    resultEl.hidden = false;
-  }
-  function place(t, rk, sub, pts, dq) {
-    return `<div class="place${dq ? ' dq' : ''}" style="--c:${t.color};--t:${t.text}"><span class="rk">${rk}</span><span class="nm">${t.name} 팀<span class="sub">${sub}</span></span><span class="tm">${pts}</span></div>`;
-  }
-
   // ---------- 그리기 ----------
-  function hexA(hex, a) {
-    const n = parseInt(hex.slice(1), 16);
-    return `rgba(${n >> 16},${(n >> 8) & 255},${n & 255},${a})`;
-  }
-  const font = px => `${Math.round(px)}px Jua, sans-serif`;
-  function cornerOf(t) {
-    const { C } = geo();
-    return at(t.angle, C / Math.SQRT2);
+  function draw(now) {
+    g.drawCourt({ track: on => { drawBatonZones(on); g.drawWaitBoxes(on); }, startLines: true });
+    drawPins(now);
+    drawTeams(now);
   }
 
-  function drawCourt() {
-    const { m, C, c, R, band, laneR, box } = geo();
-    const on = t => state[t.id]?.active !== false;
-
-    ctx.fillStyle = '#DCE3EC';
-    ctx.fillRect(0, 0, S, S);
-    // 팀 색 띠 (변 바깥)
-    TEAMS.forEach(t => {
-      const a = cornerOf(t), next = cornerOf(TEAMS[(TEAMS.indexOf(t) + 1) % 4]);
-      const side = t.angle + Math.PI / 4;
-      const ox = Math.cos(side) * m, oy = Math.sin(side) * m;
-      ctx.fillStyle = on(t) ? t.color : hexA(t.color, 0.3);
-      ctx.beginPath();
-      ctx.moveTo(a.x, a.y); ctx.lineTo(next.x, next.y);
-      ctx.lineTo(next.x + ox, next.y + oy); ctx.lineTo(a.x + ox, a.y + oy);
-      ctx.closePath(); ctx.fill();
-    });
-    ctx.fillStyle = '#F2F5F9';
-    ctx.fillRect(m, m, C, C);
-    // 팀 구역
-    TEAMS.forEach(t => {
-      const a = cornerOf(t), next = cornerOf(TEAMS[(TEAMS.indexOf(t) + 1) % 4]);
-      ctx.fillStyle = hexA(t.color, on(t) ? 0.1 : 0.03);
-      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(next.x, next.y); ctx.lineTo(c, c); ctx.closePath(); ctx.fill();
-    });
-    ctx.strokeStyle = '#16224A'; ctx.lineWidth = 2;
-    ctx.strokeRect(m, m, C, C);
-
-    // 달리는 길
-    ctx.beginPath(); ctx.arc(c, c, R + band, 0, TAU); ctx.arc(c, c, R, 0, TAU, true);
-    ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fill();
-
-    // 배턴 존
+  // 배턴 존
+  function drawBatonZones(on) {
+    const { C, c, R, band } = geo();
     TEAMS.forEach(t => {
       if (!on(t)) return;
       const mid = t.angle + ZC;
@@ -982,94 +334,7 @@
       ctx.fillText('배턴 존', 0, 0);
       ctx.restore();
     });
-
-    // ⑤ 대기 네모칸: 서클 라인 안쪽
-    TEAMS.forEach(t => {
-      if (!on(t)) return;
-      const q = at(t.angle + ZC, boxR());
-      const h = C * 0.026;
-      ctx.save(); ctx.translate(q.x, q.y); ctx.rotate(t.angle + ZC);
-      ctx.strokeStyle = '#16224A'; ctx.lineWidth = 2;
-      ctx.strokeRect(-h, -h, h * 2, h * 2);
-      ctx.restore();
-    });
-
-    // 대각선
-    TEAMS.forEach(t => {
-      const a = cornerOf(t), b = at(t.angle, box * Math.SQRT2);
-      ctx.strokeStyle = on(t) ? t.color : hexA(t.color, 0.3);
-      ctx.lineWidth = Math.max(3, C * 0.008); ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
-    });
-
-    // 서클 라인
-    ctx.beginPath(); ctx.arc(c, c, R, 0, TAU);
-    ctx.lineWidth = Math.max(4, C * 0.01); ctx.strokeStyle = '#16224A'; ctx.stroke();
-
-    // 가운데 사각형
-    const sq = [
-      ['red', c - box, c - box, c + box, c - box],
-      ['blue', c + box, c - box, c + box, c + box],
-      ['green', c + box, c + box, c - box, c + box],
-      ['yellow', c - box, c + box, c - box, c - box],
-    ];
-    ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.fillRect(c - box, c - box, box * 2, box * 2);
-    sq.forEach(([id, x1, y1, x2, y2]) => {
-      const t = TEAMS.find(x => x.id === id);
-      ctx.strokeStyle = on(t) ? t.color : hexA(t.color, 0.3);
-      ctx.lineWidth = Math.max(4, C * 0.011); ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-    });
-
-    // 출발선 + 방향 표시
-    TEAMS.forEach(t => {
-      if (!on(t)) return;
-      const a = at(t.angle, R + band * 0.25), b = at(t.angle, R + band);
-      ctx.strokeStyle = '#16224A'; ctx.lineWidth = Math.max(5, C * 0.012); ctx.lineCap = 'butt';
-      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
-      ctx.strokeStyle = t.color; ctx.lineWidth = Math.max(3, C * 0.007);
-      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
-      const aa = t.angle - 0.3;
-      const ap = at(aa, laneR);
-      const dir = aa - Math.PI / 2, hs = C * 0.018;
-      ctx.strokeStyle = 'rgba(22,34,74,.35)'; ctx.lineWidth = Math.max(3, C * 0.007); ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(ap.x + Math.cos(dir + 2.5) * hs, ap.y + Math.sin(dir + 2.5) * hs);
-      ctx.lineTo(ap.x, ap.y);
-      ctx.lineTo(ap.x + Math.cos(dir - 2.5) * hs, ap.y + Math.sin(dir - 2.5) * hs);
-      ctx.stroke();
-      const lp = at(t.angle, R + band + C * 0.04);
-      ctx.fillStyle = '#16224A'; ctx.font = font(C * 0.028);
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('출발', lp.x, lp.y);
-    });
-    ctx.lineCap = 'butt';
   }
-
-  function pinShape(h) {
-    ctx.beginPath(); ctx.arc(0, -h * 0.82, h * 0.13, 0, TAU);
-    ctx.moveTo(-h * 0.08, -h * 0.7);
-    ctx.bezierCurveTo(-h * 0.07, -h * 0.55, -h * 0.26, -h * 0.4, -h * 0.2, -h * 0.02);
-    ctx.lineTo(h * 0.2, -h * 0.02);
-    ctx.bezierCurveTo(h * 0.26, -h * 0.4, h * 0.07, -h * 0.55, h * 0.08, -h * 0.7);
-    ctx.closePath();
-  }
-  function drawOnePin(x, y, h, color, fall, fallDir, glow, now, shake = 0) {
-    ctx.save();
-    ctx.translate(x, y + h * 0.45);
-    if (glow && !reduceMotion) {
-      ctx.beginPath(); ctx.arc(0, -h * 0.45, h * (0.62 + Math.sin(now / 150) * 0.06), 0, TAU);
-      ctx.fillStyle = glow; ctx.fill();
-    }
-    ctx.rotate((Math.cos(fallDir) >= 0 ? 1 : -1) * (Math.PI / 2) * easeOut(fall) + (reduceMotion ? 0 : Math.sin(now / 45) * 0.35 * shake));
-    pinShape(h); ctx.lineWidth = Math.max(3, h * 0.1); ctx.strokeStyle = '#16224A'; ctx.lineJoin = 'round'; ctx.stroke();
-    pinShape(h); ctx.fillStyle = '#fff'; ctx.fill();
-    ctx.fillStyle = color;
-    ctx.fillRect(-h * 0.1, -h * 0.66, h * 0.2, h * 0.06);
-    ctx.fillRect(-h * 0.13, -h * 0.57, h * 0.26, h * 0.06);
-    ctx.restore();
-  }
-  const easeOut = x => 1 - Math.pow(1 - x, 3);
 
   // 지금 다가가는 원 위 핀 (조심/천천히 표시용)
   function approachingRing(t, st) {
@@ -1084,7 +349,7 @@
     // 원 위 색깔 핀 (4개 모두 트랙 위에 있어요)
     const glowOf = {};
     TEAMS.forEach(t => {
-      const st = state[t.id];
+      const st = g.state[t.id];
       if (!st || !st.active || st.dq || st.finished) return;
       const owner = approachingRing(t, st);
       if (!owner) return;
@@ -1097,68 +362,21 @@
     });
     // 종료 핀
     TEAMS.forEach(t => {
-      const st = state[t.id];
+      const st = g.state[t.id];
       if (!st || !st.active) return;
       const p = pinOf(t);
-      const goal = phase === 'race' && !st.finished && !st.dq && isLast(st) && st.s >= TAU;
+      const goal = g.phase === 'race' && !st.finished && !st.dq && isLast(st) && st.s >= TAU;
       drawOnePin(p.x, p.y, C * 0.075, t.color, st.pinFall, t.angle + Math.PI, goal ? hexA(t.color, 0.4) : null, now);
     });
   }
 
-  function drawRunner(t, x, y, dir, size, legPhase, opts = {}) {
-    const moving = opts.moving;
-    ctx.fillStyle = 'rgba(22,34,74,.18)';
-    ctx.beginPath(); ctx.ellipse(x, y + size * 0.9, size * 0.9, size * 0.35, 0, 0, TAU); ctx.fill();
-    if (moving && opts.speed > 0.55) {
-      ctx.strokeStyle = hexA(t.color, 0.45); ctx.lineWidth = 3; ctx.lineCap = 'round';
-      for (let i = -1; i <= 1; i++) {
-        const ox = x - Math.cos(dir) * size * 1.4 + Math.cos(dir + Math.PI / 2) * i * size * 0.5;
-        const oy = y - Math.sin(dir) * size * 1.4 + Math.sin(dir + Math.PI / 2) * i * size * 0.5;
-        const len = size * (0.6 + opts.speed);
-        ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(ox - Math.cos(dir) * len, oy - Math.sin(dir) * len); ctx.stroke();
-      }
-    }
-    const swing = moving ? Math.sin(legPhase) * size * 0.55 : 0;
-    ctx.strokeStyle = '#16224A'; ctx.lineWidth = Math.max(3, size * 0.22); ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(x - size * 0.3, y + size * 0.5); ctx.lineTo(x - size * 0.3 + swing, y + size * 1.05);
-    ctx.moveTo(x + size * 0.3, y + size * 0.5); ctx.lineTo(x + size * 0.3 - swing, y + size * 1.05);
-    ctx.stroke();
-    ctx.globalAlpha *= opts.faded ? 0.45 : 1;
-    ctx.beginPath(); ctx.arc(x, y, size, 0, TAU);
-    ctx.fillStyle = t.color; ctx.fill();
-    ctx.lineWidth = Math.max(2, size * 0.18); ctx.strokeStyle = opts.last ? '#F5C21B' : '#fff'; ctx.stroke();
-    if (opts.baton) {
-      const bx = x + Math.cos(dir) * size * 1.05, by = y + Math.sin(dir) * size * 1.05;
-      ctx.save(); ctx.translate(bx, by); ctx.rotate(dir);
-      ctx.fillStyle = '#fff'; ctx.strokeStyle = '#16224A'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.roundRect(-size * 0.55, -size * 0.2, size * 1.1, size * 0.4, size * 0.15); ctx.fill(); ctx.stroke();
-      ctx.restore();
-    }
-    if (opts.label != null) {
-      ctx.fillStyle = t.text; ctx.font = font(size * (String(opts.label).length > 1 ? 0.9 : 1.1));
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(opts.label, x, y + size * 0.05);
-    }
-    ctx.globalAlpha = 1;
-  }
-
-  function warnLabel(x, y, text, good) {
-    const { C } = geo();
-    ctx.font = font(C * 0.036); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.lineWidth = C * 0.01; ctx.strokeStyle = '#fff'; ctx.lineJoin = 'round';
-    ctx.strokeText(text, x, y);
-    ctx.fillStyle = good ? '#1FA35A' : '#E8403A';
-    ctx.fillText(text, x, y);
-  }
-
   function drawTeams(now) {
-    const { c, m, C } = geo();
+    const { c, C } = geo();
     const size = C * 0.024;
     TEAMS.forEach(t => {
-      const st = state[t.id];
+      const st = g.state[t.id];
       if (!st || !st.active) return;
-      const racing = phase === 'race';
+      const racing = g.phase === 'race';
       // 다음 주자: ⑤ 네모칸에서 기다리다가, 앞 주자가 가까워지면 배턴 존으로 나가요
       const side = t.angle + Math.PI / 4;
       const next = st.runner + 1;
@@ -1207,94 +425,7 @@
     });
   }
 
-  function drawParticles() {
-    particles.forEach(p => {
-      ctx.globalAlpha = Math.max(0, p.life / p.max);
-      ctx.fillStyle = p.color;
-      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, TAU); ctx.fill();
-    });
-    ctx.globalAlpha = 1;
-  }
-
-  function fitText(text, maxW, px) {
-    let fs = px;
-    ctx.font = font(fs);
-    while (ctx.measureText(text).width > maxW && fs > 10) { fs -= 1; ctx.font = font(fs); }
-  }
-
-  function drawCenter() {
-    const { c, R, C } = geo();
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.lineJoin = 'round';
-    if (phase === 'countdown') {
-      const n = Math.ceil(countdownT);
-      const frac = countdownT - Math.floor(countdownT);
-      const scale = reduceMotion ? 1 : 0.8 + frac * 0.4;
-      ctx.font = font(C * 0.2 * scale);
-      ctx.lineWidth = C * 0.02; ctx.strokeStyle = '#fff'; ctx.strokeText(n, c, c);
-      ctx.fillStyle = '#16224A'; ctx.fillText(n, c, c);
-      const sub = `${match.heat}조 · 출발 소리를 기다려요`;
-      ctx.fillStyle = '#5A6689'; fitText(sub, R * 1.4, C * 0.04);
-      ctx.fillText(sub, c, c + R * 0.4);
-      return;
-    }
-    if (phase === 'race' || phase === 'over' || phase === 'result') {
-      const showBanner = banner.t > 0;
-      const text = showBanner ? banner.text : `${match.heat}조 · 톡톡! 빠르게`;
-      fitText(text, R * 1.6, C * (showBanner ? 0.052 : 0.042));
-      if (showBanner) {
-        ctx.lineWidth = C * 0.012; ctx.strokeStyle = '#fff'; ctx.strokeText(text, c, c - R * 0.37);
-      }
-      ctx.fillStyle = showBanner ? (banner.color === '#F5C21B' ? '#B88A00' : banner.color) : 'rgba(22,34,74,.4)';
-      ctx.fillText(text, c, c - R * 0.37);
-      const actives = TEAMS.filter(t => state[t.id].active);
-      const order = actives.slice().sort((a, b) => {
-        const A = state[a.id], B = state[b.id];
-        if (A.dq !== B.dq) return A.dq ? 1 : -1;
-        if (A.rank || B.rank) return (A.rank || 99) - (B.rank || 99);
-        return progressOf(B) - progressOf(A);
-      });
-      const dot = C * 0.022, gap = C * 0.01;
-      ctx.font = font(C * 0.026);
-      const label = '순위', lw = ctx.measureText(label).width + C * 0.015;
-      const total = lw + order.length * dot * 2 + (order.length - 1) * gap;
-      ctx.fillStyle = 'rgba(22,34,74,.45)'; ctx.textAlign = 'left';
-      const y = c + R * 0.38;
-      ctx.fillText(label, c - total / 2, y);
-      ctx.textAlign = 'center';
-      let x = c - total / 2 + lw + dot;
-      order.forEach(t => {
-        ctx.globalAlpha = state[t.id].dq ? 0.3 : 1;
-        ctx.beginPath(); ctx.arc(x, y, dot, 0, TAU);
-        ctx.fillStyle = t.color; ctx.fill();
-        x += dot * 2 + gap;
-      });
-      ctx.globalAlpha = 1;
-    }
-  }
-
-  function draw(now) {
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    drawCourt();
-    drawPins(now);
-    drawTeams(now);
-    drawParticles();
-    drawCenter();
-  }
-
-  let last = performance.now();
-  function frame(now) {
-    const dt = Math.min(0.05, (now - last) / 1000);
-    last = now;
-    update(dt);
-    draw(now);
-    requestAnimationFrame(frame);
-  }
-
-  layout();
-  resetState();
-  requestAnimationFrame(frame);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => draw(performance.now()));
+  g.run();
 })();
 </script>
 <script>
