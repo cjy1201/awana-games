@@ -20,6 +20,27 @@ function blockZoom() {
 }
 blockZoom();
 
+// 전체 화면: 브라우저 탭·주소창을 가려서 아이들이 누르다 다른 페이지로 가지 않게.
+// 홈 화면에 설치한 앱은 이미 전체 화면이라 건드리지 않아요.
+// 브라우저는 버튼을 누른 순간에만 전체 화면을 허락해서, 시작하기·다음 버튼을 누를 때 함께 요청해요.
+const Fullscreen = (() => {
+  const root = document.documentElement;
+  const installed = () => matchMedia('(display-mode: standalone), (display-mode: fullscreen)').matches || navigator.standalone === true;
+  const supported = () => !!(root.requestFullscreen || root.webkitRequestFullscreen);
+  const active = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
+  const quiet = p => { if (p && p.catch) p.catch(() => {}); };
+  function enter() {
+    if (installed() || active() || !supported()) return;
+    try { quiet(root.requestFullscreen ? root.requestFullscreen({ navigationUI: 'hide' }) : root.webkitRequestFullscreen()); } catch (e) {}
+  }
+  function exit() {
+    if (!active()) return;
+    try { quiet(document.exitFullscreen ? document.exitFullscreen() : document.webkitExitFullscreen()); } catch (e) {}
+  }
+  const usable = () => supported() && !installed();
+  return { enter, exit, active, usable };
+})();
+
 window.Court = (() => {
   const TAU = Math.PI * 2;
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -373,8 +394,9 @@ window.Court = (() => {
       }));
     });
     function toMenu() { resultEl.hidden = true; introEl.hidden = false; g.phase = 'intro'; g.match.heat = 1; resetState(); }
-    document.getElementById('startBtn').addEventListener('click', startMatch);
+    document.getElementById('startBtn').addEventListener('click', () => { Fullscreen.enter(); startMatch(); });
     document.getElementById('nextBtn').addEventListener('click', () => {
+      Fullscreen.enter();
       const match = g.match;
       if (match.heat < settings.heats && match.history.length === match.heat) { match.heat++; startHeat(); }
       else startMatch();
@@ -387,6 +409,19 @@ window.Court = (() => {
       soundBtn.textContent = soundOn ? '소리 켜짐' : '소리 꺼짐';
       soundBtn.setAttribute('aria-pressed', soundOn);
     });
+    // 전체 화면 버튼 (브라우저에서 열었을 때만)
+    if (Fullscreen.usable()) {
+      const fsBtn = document.createElement('button');
+      fsBtn.className = 'tool'; fsBtn.id = 'fsBtn'; fsBtn.type = 'button';
+      const label = () => {
+        fsBtn.textContent = Fullscreen.active() ? '전체 화면 끄기' : '전체 화면';
+        fsBtn.setAttribute('aria-pressed', Fullscreen.active());
+      };
+      fsBtn.addEventListener('click', () => (Fullscreen.active() ? Fullscreen.exit() : Fullscreen.enter()));
+      ['fullscreenchange', 'webkitfullscreenchange'].forEach(ev => document.addEventListener(ev, label));
+      label();
+      document.getElementById('tools').appendChild(fsBtn);
+    }
 
     // ---------- 진행 ----------
     function burst(x, y, color, n = 26) {
