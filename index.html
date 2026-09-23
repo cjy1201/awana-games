@@ -267,6 +267,12 @@
       tags: ['4팀', '10명 전원', '2번 진행'], team: 'var(--red)', art: 'beanbag',
     },
     {
+      id: 'zigzag', ready: true, href: 'zigzag/',
+      club: 'Sparks', title: 'Sparks 지그재그 달리기',
+      desc: '네 팀 색깔 핀을 하나씩 시계 반대 방향으로 돌고 가운데 핀까지! 핀 돌 땐 천천히.',
+      tags: ['4팀', '4개 조 개인전', '1등 200점'], team: 'var(--yellow)', art: 'zigzag',
+    },
+    {
       id: 'tug', club: 'Sparks', title: '사방 줄다리기',
       desc: '네 팀이 네 방향에서 동시에 겨뤄요.',
       tags: ['4팀'], team: 'var(--yellow)', art: 'tug',
@@ -307,6 +313,15 @@
       <rect x="52" y="38" width="36" height="18" rx="7" fill="#1FA35A" stroke="#16224A" stroke-width="3" transform="rotate(-10 70 47)"/>
       <path d="M40 40 q-8 6 0 12 M100 36 q8 6 0 12" stroke="#E8403A" stroke-width="3" fill="none" stroke-linecap="round"/>
       <path d="M58 90 l-8 16 M82 90 l8 16" stroke="#16224A" stroke-width="5" stroke-linecap="round"/>
+    </svg>`,
+    zigzag: `<svg viewBox="0 0 200 125" aria-hidden="true">
+      <circle cx="100" cy="62.5" r="44" fill="none" stroke="#16224A" stroke-width="3"/>
+      <circle cx="69" cy="31" r="11" fill="none" stroke="#E8403A" stroke-width="3" stroke-dasharray="4 3"/>
+      <circle cx="131" cy="31" r="11" fill="none" stroke="#2F6FE4" stroke-width="3" stroke-dasharray="4 3"/>
+      <circle cx="131" cy="94" r="11" fill="none" stroke="#1FA35A" stroke-width="3" stroke-dasharray="4 3"/>
+      <circle cx="69" cy="94" r="11" fill="none" stroke="#F5C21B" stroke-width="3" stroke-dasharray="4 3"/>
+      ${PIN(69, 38, .45, '#E8403A')}${PIN(131, 38, .45, '#2F6FE4')}${PIN(131, 101, .45, '#1FA35A')}${PIN(69, 101, .45, '#F5C21B')}
+      ${RUNNER(58, 22, '#F5C21B')}
     </svg>`,
     ball: `<svg viewBox="0 0 200 125" aria-hidden="true">
       <path d="M30 110 L170 20" stroke="#2F6FE4" stroke-width="4" stroke-linecap="round"/>
