@@ -23,10 +23,17 @@ blockZoom();
 // 전체 화면: 브라우저 탭·주소창을 가려서 아이들이 누르다 다른 페이지로 가지 않게.
 // 홈 화면에 설치한 앱은 이미 전체 화면이라 건드리지 않아요.
 // 브라우저는 버튼을 누른 순간에만 전체 화면을 허락해서, 시작하기·다음 버튼을 누를 때 함께 요청해요.
+// Safari(iPad·iPhone 의 모든 브라우저 포함)는 전체 화면에서 연타하면
+// "전체 화면인 상태에서 입력하는 것 같습니다" 경고를 계속 띄워서 쓰지 않고, 홈 화면에 추가하도록 안내해요.
+function isSafariEngine(ua = navigator.userAgent, platform = navigator.platform, touch = navigator.maxTouchPoints || 0) {
+  const appleMobile = /iPad|iPhone|iPod/.test(ua) || (platform === 'MacIntel' && touch > 1);   // iPad 는 Mac 처럼 보여요
+  const desktopSafari = /Safari/.test(ua) && !/Chrome|Chromium|CriOS|Edg|OPR|Firefox|FxiOS|Android/.test(ua);
+  return appleMobile || desktopSafari;
+}
 const Fullscreen = (() => {
   const root = document.documentElement;
   const installed = () => matchMedia('(display-mode: standalone), (display-mode: fullscreen)').matches || navigator.standalone === true;
-  const supported = () => !!(root.requestFullscreen || root.webkitRequestFullscreen);
+  const supported = () => !isSafariEngine() && !!(root.requestFullscreen || root.webkitRequestFullscreen);
   const active = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
   const quiet = p => { if (p && p.catch) p.catch(() => {}); };
   function enter() {
@@ -38,7 +45,9 @@ const Fullscreen = (() => {
     try { quiet(document.exitFullscreen ? document.exitFullscreen() : document.webkitExitFullscreen()); } catch (e) {}
   }
   const usable = () => supported() && !installed();
-  return { enter, exit, active, usable };
+  // Safari 에서 브라우저로 열었을 때: 홈 화면에 추가하라고 알려줘요
+  const suggestInstall = () => isSafariEngine() && !installed();
+  return { enter, exit, active, usable, suggestInstall };
 })();
 
 window.Court = (() => {
@@ -421,6 +430,15 @@ window.Court = (() => {
       ['fullscreenchange', 'webkitfullscreenchange'].forEach(ev => document.addEventListener(ev, label));
       label();
       document.getElementById('tools').appendChild(fsBtn);
+    }
+    // Safari: 전체 화면 대신 홈 화면에 추가하도록 설명 화면에 안내
+    if (Fullscreen.suggestInstall()) {
+      const tip = document.createElement('p');
+      tip.className = 'install-tip';
+      tip.innerHTML = '<b>탭 없이 쓰려면</b> Safari <kbd>공유</kbd> → <kbd>홈 화면에 추가</kbd> 로 설치해서 열어 주세요. '
+        + 'Safari 는 전체 화면에서 빠르게 누르면 경고가 떠서, 브라우저에서는 전체 화면을 쓰지 않아요.';
+      const start = document.getElementById('startBtn');
+      start.parentNode.insertBefore(tip, start.nextSibling);
     }
 
     // ---------- 진행 ----------
