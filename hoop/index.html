@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Sparks 후프 릴레이</title>
+<meta name="description" content="AWANA Sparks 후프 릴레이 규칙을 그대로 옮긴 네 팀 게임: 팀 전원이 후프를 왕복으로 통과해요">
+<meta name="theme-color" content="#16224A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AWANA 게임">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" type="image/png" href="../icons/favicon.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="preload" href="../fonts/jua.woff" as="font" type="font/woff" crossorigin>
+<link rel="stylesheet" href="../shared/court.css">
+<style>
+  /* 버튼 글자로 통과 횟수를 보여줘서 작은 동그라미는 없어요 */
+  .pad-runners { display: none; }
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <canvas id="court" aria-label="AWANA 게임 트랙"></canvas>
+
+  <button class="pad" data-team="red" aria-label="빨강 팀 버튼"><div class="pad-inner"><span class="pad-name">빨강</span><span class="pad-runners"></span><span class="pad-state">준비</span></div></button>
+  <button class="pad" data-team="blue" aria-label="파랑 팀 버튼"><div class="pad-inner"><span class="pad-name">파랑</span><span class="pad-runners"></span><span class="pad-state">준비</span></div></button>
+  <button class="pad" data-team="green" aria-label="초록 팀 버튼"><div class="pad-inner"><span class="pad-name">초록</span><span class="pad-runners"></span><span class="pad-state">준비</span></div></button>
+  <button class="pad" data-team="yellow" aria-label="노랑 팀 버튼"><div class="pad-inner"><span class="pad-name">노랑</span><span class="pad-runners"></span><span class="pad-state">준비</span></div></button>
+
+  <div id="tools">
+    <a class="tool" href="../" aria-label="게임 모음으로">← 게임 모음</a>
+    <button class="tool" id="helpBtn" type="button">게임 방법</button>
+    <button class="tool" id="soundBtn" type="button" aria-pressed="true">소리 켜짐</button>
+  </div>
+
+  <!-- 게임 방법 + 설정 -->
+  <div class="overlay" id="intro">
+    <div class="sheet">
+      <h1>Sparks<span class="stripe" aria-hidden="true"><b style="background:var(--red)"></b><b style="background:var(--blue)"></b><b style="background:var(--green)"></b><b style="background:var(--yellow)"></b></span>후프 릴레이</h1>
+      <p class="scoreline"><b>11명 전원</b> (코치 포함) · 주자 1회전 No4 · 2회전 No9 · <b>2번</b> 진행 · 1등 400점 · 2등 200점</p>
+
+      <div class="steps">
+        <div class="step">
+          <svg viewBox="0 0 96 96" aria-hidden="true">
+            <circle cx="48" cy="48" r="28" fill="#fff" stroke="#16224A" stroke-width="4"/>
+            <path d="M48 8 A40 40 0 1 0 88 48" fill="none" stroke="#E8403A" stroke-width="4" stroke-dasharray="6 6"/>
+            <circle cx="48" cy="8" r="8" fill="#E8403A" stroke="#fff" stroke-width="3"/>
+            <ellipse cx="48" cy="62" rx="14" ry="6" fill="none" stroke="#E8403A" stroke-width="3.5"/>
+          </svg>
+          <strong>한 바퀴 돌며 후프</strong>
+          <span>한 바퀴 거의 다 와서 서클 안 네모칸의<br>후프를 집고 바로 1번에게 가요</span>
+        </div>
+        <div class="step">
+          <svg viewBox="0 0 96 96" aria-hidden="true">
+            <circle cx="22" cy="60" r="7" fill="#1FA35A" stroke="#fff" stroke-width="2.5"/>
+            <circle cx="42" cy="60" r="9" fill="#1FA35A" stroke="#fff" stroke-width="2.5"/>
+            <circle cx="62" cy="60" r="7" fill="#1FA35A" stroke="#fff" stroke-width="2.5"/>
+            <circle cx="80" cy="60" r="7" fill="#1FA35A" stroke="#fff" stroke-width="2.5"/>
+            <ellipse cx="42" cy="46" rx="16" ry="6" fill="none" stroke="#1FA35A" stroke-width="4"/>
+            <text x="48" y="90" text-anchor="middle" font-family="Jua, sans-serif" font-size="14" fill="#16224A">톡톡톡!</text>
+          </svg>
+          <strong>연타로 줄을 따라 통과</strong>
+          <span>코치와 주자가 함께 후프를 잡고<br>1번 → 10번 방향으로 옮겨요</span>
+        </div>
+        <div class="step">
+          <svg viewBox="0 0 96 96" aria-hidden="true">
+            <path d="M14 40 H80" stroke="#2F6FE4" stroke-width="4" stroke-dasharray="6 5"/>
+            <path d="M80 40 l-8 -6 M80 40 l-8 6" stroke="#2F6FE4" stroke-width="4" stroke-linecap="round"/>
+            <path d="M80 62 H14" stroke="#E8403A" stroke-width="4" stroke-dasharray="6 5"/>
+            <path d="M14 62 l8 -6 M14 62 l8 6" stroke="#E8403A" stroke-width="4" stroke-linecap="round"/>
+          </svg>
+          <strong>반대로 한 번 더 (왕복)</strong>
+          <span>마지막 선수까지 가면<br>10번 → 1번으로 되돌아와요</span>
+        </div>
+        <div class="step">
+          <svg viewBox="0 0 96 96" aria-hidden="true">
+            <g transform="translate(48 70)">
+              <path d="M0 -40 m-7 0 a7 7 0 1 0 14 0 a7 7 0 1 0 -14 0 M-4 -32 h8 l4 14 q6 12 2 22 h-20 q-4 -10 2 -22 z" fill="#fff" stroke="#16224A" stroke-width="3" stroke-linejoin="round"/>
+            </g>
+            <ellipse cx="48" cy="66" rx="22" ry="7" fill="none" stroke="#F5C21B" stroke-width="4"/>
+            <path d="M48 12 v8 M36 16 l4 6 M60 16 l-4 6" stroke="#16224A" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+          <strong>후프를 핀에 살짝</strong>
+          <span>우리 팀 서클 핀에 초록 칸에서 톡!<br>그다음 가운데 핀까지 “살살”</span>
+        </div>
+      </div>
+
+      <div class="foul">
+        <b>이러면 실격!</b>
+        <ul>
+          <li>후프를 서클 핀에 내려놓을 때 핀이 넘어지면</li>
+          <li>후프를 통과하지 않은 선수가 있으면 (게임 중인 주자는 빼고)</li>
+          <li>달리다 서클 핀을 넘어뜨리면 · 종료 핀을 슬라이딩이나 점프로 넘어뜨리면</li>
+          <li>후프 통과 중 코치나 관중이 선수를 터치하면 · 코치가 트랙 안으로 들어오면</li>
+          <li>#1·#2 는 첫 번째 대기 라인 앞(코치 옆), 나머지는 그 뒤로 번호 순서대로 서요 (첫 통과 뒤엔 자리를 떠나도 돼요)</li>
+        </ul>
+      </div>
+
+      <div class="settings">
+        <div class="row" role="group" aria-label="참가 팀">
+          <span class="lbl">참가 팀</span>
+          <button class="chip" type="button" data-pick="red" aria-pressed="true" style="--c:var(--red)">빨강</button>
+          <button class="chip" type="button" data-pick="blue" aria-pressed="true" style="--c:var(--blue)">파랑</button>
+          <button class="chip" type="button" data-pick="green" aria-pressed="true" style="--c:var(--green)">초록</button>
+          <button class="chip" type="button" data-pick="yellow" aria-pressed="true" style="--c:var(--yellow);--t:#16224A">노랑</button>
+        </div>
+        <div class="row" role="group" aria-label="경기 횟수">
+          <span class="lbl">경기</span>
+          <button class="chip" type="button" data-heats="2" aria-pressed="true">2번 (정식)</button>
+          <button class="chip" type="button" data-heats="1" aria-pressed="false">1번</button>
+        </div>
+        <div class="row" role="group" aria-label="후프 내려놓기 난이도">
+          <span class="lbl">후프 놓기</span>
+          <button class="chip" type="button" data-place="0" aria-pressed="false">쉬움</button>
+          <button class="chip" type="button" data-place="1" aria-pressed="true">보통</button>
+          <button class="chip" type="button" data-place="2" aria-pressed="false">어려움</button>
+        </div>
+        <div class="row" role="group" aria-label="핀이 넘어지면">
+          <span class="lbl">핀이 넘어지면</span>
+          <button class="chip" type="button" data-strict="1" aria-pressed="true">실격 (정식)</button>
+          <button class="chip" type="button" data-strict="0" aria-pressed="false">다시 놓기 (연습)</button>
+        </div>
+      </div>
+
+      <button class="go" id="startBtn" type="button">시작하기</button>
+      <p class="keys">달리기·통과는 톡톡, 후프 놓을 땐 초록 칸에서 톡 · 주심은 서클 안, 선심(J)은 옆 팀 대기 구역 끝 · 키보드 연습: 빨강 Q · 파랑 P · 초록 M · 노랑 Z</p>
+    </div>
+  </div>
+
+  <!-- 결과 -->
+  <div class="overlay" id="result" hidden>
+    <div class="sheet">
+      <h2 id="resultTitle">경기 결과</h2>
+      <div class="podium" id="podium"></div>
+      <div class="buttons">
+        <button class="go" id="nextBtn" type="button">다음</button>
+        <button class="go ghost" id="menuBtn" type="button">설정 바꾸기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../shared/court.js"></script>
+<script>
+(() => {
+  const { TAU, TEAMS, ZC, hexA, reduceMotion, font } = Court;
+
+  const DECAY = 1.6;
+  const LAP_VMAX = TAU / 4.2;              // 한 바퀴 약 4.2초
+  const WALK_VMAX = () => g.geo().C * 0.45; // 후프 들고 움직일 때 (px/초)
+  const TAPS_PER_PASS = 3;                 // 한 명을 지나가는 데 필요한 연타 (톡 한 번에 후프가 1/3칸씩)
+  const U_EDGE = 0.6;                      // 줄 양 끝에서 후프가 서 있는 자리 (첫 선수 앞, 마지막 선수 뒤)
+  const PICKUP_S = TAU - ZC;               // 한 바퀴 거의 다 와서 우리 팀 변 가운데 = 후프 자리
+  const MARK_TIME = 1.3;                   // 후프 내려놓기 표시가 한 바퀴 도는 시간(초)
+  const SAFE = [0.4, 0.28, 0.18];          // 쉬움 · 보통 · 어려움 (핀을 건드리지 않는 자리 크기)
+  const RETRY_TIME = 1.0;
+  const FINISH_MAX = Court.FINISH_SAFE, WALK = 0.3;   // 종료 핀: 너무 빠르면 슬라이딩 실격일 수 있어요 (확률)
+  const RUNNER_NO = [4, 9];                // 1회전 주자 No4, 2회전 주자 No9
+
+  const settings = { teams: new Set(['red', 'blue', 'green', 'yellow']), heats: 2, place: 1, strict: 1 };
+  let ringFall = {};                       // 후프를 놓다 넘어진 서클 핀 (팀 id → 0..1)
+
+  const g = Court.create({
+    settings, chips: ['heats', 'place', 'strict'],
+    heatName: '회전', goText: '시작!', idleText: '한 바퀴 → 후프 통과 → 핀에 내려놓기', nextReady: '준비',
+    heatTitle: h => ` (주자 No${RUNNER_NO[h - 1] || ''})`,
+    resultSub: (t, h) => `${h.time.toFixed(1)}초`,
+    teamState: () => ({
+      mode: 'lap',           // lap 한 바퀴 · grab 네모칸의 후프 집기 · toLine 1번에게 · pass 통과 · toPin 핀으로 · place 내려놓기 · go 가운데로
+      s: Court.START_S, v: 0, d: 0, legPhase: 0,   // 출발선 바로 뒤에서
+      u: -U_EDGE, way: 1,    // 줄 위 후프 자리 (0 = 1번 선수, 1 = 다음 선수 …), 가는 방향 (+1 = 1번→10번, -1 = 되돌아오기)
+      pass: 0, flash: {},    // 통과한 횟수(왕복 18번), 방금 통과한 선수 반짝임
+      mark: 0, retry: 0,
+    }),
+    onReset: () => { ringFall = {}; },
+    padText, padDots: () => [], tap, race, tick, draw,
+    progress: st => ['lap', 'grab', 'toLine', 'pass', 'toPin', 'place', 'go'].indexOf(st.mode) * 30 + st.pass + st.s,
+  });
+  const { ctx, sfx, tone, geo, at, pinOf, ringPinOf, boxR, cornerOf, say, updatePads, refreshPad, burst,
+          drawOnePin, drawRunner, drawCoach, warnLabel } = g;
+  sfx.pass1 = n => tone(n * 1.5, 0.06, 'triangle', 0.06);
+
+  // 이번 회전에 후프를 통과할 선수: 주자를 뺀 No1~No10, #1·#2 가 맨 앞
+  const passers = () => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].filter(n => n !== RUNNER_NO[g.match.heat - 1]);
+  const totalPasses = () => passers().length * 2;          // 왕복
+
+  // ---------- 자리 ----------
+  function lanePos(t, s) { const a = t.angle - s; const p = at(a, geo().laneR); return { x: p.x, y: p.y, dir: a - Math.PI / 2 }; }
+  // 후프: 서클 안 네모칸의 종료 핀 쪽(가운데 쪽) 변 위에 놓여 있어요
+  const FLAT_R = () => geo().C * 0.03;   // 바닥에 놓인 후프 반지름
+  const hoopHome = t => at(t.angle + ZC, boxR() - g.BOX_H() - FLAT_R());   // 네모칸 가운데 쪽에 붙여 놓아요
+  // 대기 줄: 우리 팀 변 바깥 띠, 출발선 쪽 모서리에 코치, 그 옆으로 #1, #2 … 순서대로
+  function lineSpot(t, i) {
+    const { m } = geo();
+    const a = cornerOf(t), next = cornerOf(TEAMS[(TEAMS.indexOf(t) + 1) % 4]);
+    const side = t.angle + Math.PI / 4;
+    const f = 0.08 + i * 0.047;
+    return { x: a.x + (next.x - a.x) * f + Math.cos(side) * m * 0.42, y: a.y + (next.y - a.y) * f + Math.sin(side) * m * 0.42 };
+  }
+  const coachSpot = t => lineSpot(t, -1);
+  // 후프 반대편(줄 바깥쪽)에서 코치가 같이 잡는 자리
+  const HOOP_R = () => geo().C * 0.022 * 1.5;   // 세워 든 후프 반지름
+  const coachHold = (t, u) => { const p = lineSpot(t, u), side = t.angle + Math.PI / 4, r = HOOP_R() * 0.95; return { x: p.x + Math.cos(side) * r, y: p.y + Math.sin(side) * r }; };
+  // 후프를 든 주자가 서는 곳: 줄 바로 안쪽(코트 쪽)에서 후프와 나란히
+  const hoopAt = (t, u) => { const p = lineSpot(t, u), side = t.angle + Math.PI / 4, { m } = geo(); return { x: p.x - Math.cos(side) * m * 0.9, y: p.y - Math.sin(side) * m * 0.9 }; };
+  const pinStand = t => { const { R, C } = geo(); return at(t.angle, R + C * 0.05); };   // 우리 팀 서클 핀 앞
+
+  // 걷기 구간: from → to 를 d(px) 만큼
+  function legOf(t, mode) {
+    if (mode === 'grab') return [lanePos(t, PICKUP_S), hoopHome(t)];
+    if (mode === 'toLine') return [hoopHome(t), hoopAt(t, -U_EDGE)];
+    if (mode === 'toPin') return [hoopAt(t, -U_EDGE), pinStand(t)];
+    if (mode === 'go') return [pinStand(t), pinOf(t)];
+    return null;
+  }
+  function legPos(t, mode, d) {
+    const [a, b] = legOf(t, mode);
+    const L = Math.hypot(b.x - a.x, b.y - a.y), f = Math.min(1, d / (L || 1));
+    return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f, dir: Math.atan2(b.y - a.y, b.x - a.x), L };
+  }
+
+  const safeHalf = () => SAFE[settings.place] / 2;
+  const inSafe = m => Math.abs(((m + 0.5) % 1) - 0.5) <= safeHalf();
+
+  // ---------- 버튼 ----------
+  function padText(st) {
+    switch (st.mode) {
+      case 'lap': return '톡톡!';
+      case 'grab': return '후프 잡기!';
+      case 'toLine': return '1번에게!';
+      case 'pass': return `통과 ${st.pass}/${totalPasses()}`;
+      case 'toPin': return '핀으로!';
+      case 'place': return st.retry > 0 ? '다시!' : (inSafe(st.mark) ? '지금!' : '기다려…');
+      default: {   // go: 가운데 핀까지 달리다가, 가까워지면 살살
+        const t = TEAMS.find(x => g.state[x.id] === st);
+        return st.d > legPos(t, 'go', 0).L * 0.4 ? '살살!' : '핀까지!';
+      }
+    }
+  }
+
+  function tap(t, st) {
+    if (st.retry > 0) return;
+    if (!g.tapGap(st)) return;
+    if (st.mode === 'lap') { st.v = Math.min(LAP_VMAX, st.v + 0.3); sfx.tap(t.note); return; }
+    if (st.mode === 'pass') {                            // 연타할 때마다 후프가 줄을 따라 나아가요
+      const n = passers().length;
+      const before = st.u;
+      st.u += st.way / TAPS_PER_PASS;
+      sfx.tap(t.note);
+      // 후프가 선수 자리를 지나가면 그 선수가 통과
+      for (let i = 0; i < n; i++) {
+        if ((before < i && st.u >= i) || (before > i && st.u <= i)) {
+          st.pass++; st.flash[i] = performance.now();
+          sfx.pass1(t.note);
+        }
+      }
+      if (st.way > 0 && st.u >= n - 1 + U_EDGE) {          // 10번 뒤까지 왔으면 되돌아가기
+        st.u = n - 1 + U_EDGE; st.way = -1;
+        say(`${t.name} 반대로! 마지막 선수부터 다시`, t.color, 1.2);
+      } else if (st.way < 0 && st.u <= -U_EDGE) {          // 1번 앞으로 돌아왔으면 끝
+        st.u = -U_EDGE;
+        st.mode = 'toPin'; st.d = 0; st.v = 0;
+        sfx.pass();
+        say(`${t.name} 모두 왕복 통과! 후프를 핀으로`, t.color, 1.5);
+      }
+      updatePads();
+      return;
+    }
+    if (st.mode === 'place') {                           // 후프를 핀에 내려놓기
+      if (inSafe(st.mark)) placeDone(t, st); else placeFail(t, st);
+      return;
+    }
+    st.v = Math.min(WALK_VMAX(), st.v + WALK_VMAX() * 0.22);   // grab · toLine · toPin · go
+    sfx.tap(t.note);
+  }
+
+  // ---------- 진행 ----------
+  function placeDone(t, st) {
+    st.mode = 'go'; st.d = 0; st.v = 0;
+    const p = ringPinOf(t);
+    burst(p.x, p.y, t.color, 18);
+    sfx.ok();
+    say(`${t.name} 후프를 핀에 걸었어요! 가운데로 살살`, t.color, 1.4);
+    updatePads();
+  }
+  function placeFail(t, st) {
+    const p = ringPinOf(t);
+    burst(p.x, p.y, '#16224A', 16);
+    sfx.foul();
+    if (settings.strict) {
+      st.dq = true; st.dqReason = '후프를 놓다 서클 핀이 넘어짐'; st.v = 0;
+      ringFall[t.id] = 0.001;
+      say(`${t.name} 서클 핀이 넘어졌어요! 실격`, t.color, 2.4);
+    } else {
+      st.retry = RETRY_TIME;
+      say(`${t.name} 핀을 건드렸어요! 다시 내려놓기`, t.color, 1.3);
+    }
+    updatePads();
+  }
+  const NEXT = { grab: 'toLine', toLine: 'pass', toPin: 'place' };
+  const ARRIVE = { grab: '후프 잡았다! 1번에게', toLine: '코치와 함께 후프를 들고 통과!', toPin: '초록 칸에서 톡! 후프 내려놓기', pass: '' };
+
+  function race(dt) {
+    for (const t of TEAMS) {
+      const st = g.state[t.id];
+      if (!st.active || st.finished || st.dq) continue;
+
+      if (st.mode === 'lap') {
+        st.v *= Math.exp(-DECAY * dt);
+        st.s += st.v * dt;
+        st.legPhase += st.v * dt * 14;
+        if (st.s >= PICKUP_S) {   // 한 바퀴 거의 다 와서 네모칸으로 들어가 후프를 집어요
+          st.s = PICKUP_S; st.mode = 'grab'; st.d = 0; st.v *= 0.5 * g.geo().laneR;   // 달리던 힘 그대로 (px/초로)
+          updatePads();
+        }
+      } else if (st.mode === 'place') {
+        if (st.retry > 0) { st.retry -= dt; if (st.retry <= 0) { st.retry = 0; updatePads(); } }
+        else st.mark = (st.mark + dt / MARK_TIME) % 1;
+      } else if (st.mode !== 'pass') {
+        const L = legPos(t, st.mode, 0).L;
+        const slow = st.mode === 'go' && st.d > L * 0.4;
+        st.v *= Math.exp(-DECAY * dt);
+        if (slow && st.v < WALK_VMAX() * WALK) st.v = WALK_VMAX() * WALK;
+        st.d += st.v * dt;
+        st.legPhase += st.v * dt * 0.14;
+        if (st.d >= L) {
+          st.d = L;
+          if (st.mode === 'go') {
+            if (g.slideFoul(st.v / WALK_VMAX())) { st.pinFall = 0.001; st.dq = true; st.dqReason = '슬라이딩으로 종료 핀을 넘어뜨림'; sfx.foul(); say(`${t.name} 슬라이딩! 실격`, t.color, 2.2); updatePads(); }
+            else g.knockPin(t);
+            continue;
+          }
+          const was = st.mode;
+          st.mode = NEXT[was]; st.d = 0; st.v = 0;
+          if (st.mode === 'place') st.mark = Math.random();
+          if (ARRIVE[was]) say(`${t.name} ${ARRIVE[was]}`, t.color, 1.4);
+          sfx.ok();
+          updatePads();
+        }
+      }
+      refreshPad(t);
+    }
+  }
+  function tick(dt) {
+    TEAMS.forEach(t => { if (ringFall[t.id] != null) ringFall[t.id] = Math.min(1, ringFall[t.id] + dt * 3); });
+  }
+
+  // ---------- 그리기 ----------
+  function draw(now) {
+    g.drawCourt({ startLines: true });
+    drawPins(now);
+    drawTeams(now);
+  }
+
+  function hoop(x, y, r, color, tilt = 0.35, outline = false) {
+    ctx.save(); ctx.translate(x, y); ctx.scale(1, tilt);
+    const w = Math.max(3, r * 0.22) / tilt * 0.5;
+    if (outline) {   // 팀 색 띠 위에서도 보이게 테두리
+      ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU);
+      ctx.lineWidth = w + 3 / tilt; ctx.strokeStyle = '#16224A'; ctx.stroke();
+    }
+    ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU);
+    ctx.lineWidth = w; ctx.strokeStyle = color; ctx.stroke();
+    ctx.restore();
+  }
+
+  // 줄 위에 세워 든 후프: 줄 방향으로는 얇고, 줄과 직각으로는 길게
+  function hoopUpright(r) {
+    ctx.save(); ctx.scale(0.28, 1);
+    ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU);
+    ctx.lineWidth = 9; ctx.strokeStyle = '#16224A'; ctx.stroke();
+    ctx.lineWidth = 5; ctx.strokeStyle = '#FFFFFF'; ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawPins(now) {
+    const { C } = geo();
+    TEAMS.forEach(t => {
+      const st = g.state[t.id];
+      const rp = ringPinOf(t);
+      drawOnePin(rp.x, rp.y, C * 0.05, t.color, ringFall[t.id] || 0, t.angle, null, now);
+      // 핀에 걸린 후프
+      if (st && st.active && (st.mode === 'go' || st.finished)) hoop(rp.x, rp.y + C * 0.012, C * 0.035, t.color, 0.4);
+    });
+    TEAMS.forEach(t => {
+      const st = g.state[t.id];
+      if (!st || !st.active) return;
+      const p = pinOf(t);
+      const goal = g.phase === 'race' && !st.finished && !st.dq && st.mode === 'go';
+      drawOnePin(p.x, p.y, C * 0.075, t.color, st.pinFall, t.angle + Math.PI, goal ? hexA(t.color, 0.4) : null, now);
+    });
+  }
+
+  function drawMark(x, y, r, st) {
+    const top = -Math.PI / 2;
+    ctx.lineWidth = r * 0.3; ctx.lineCap = 'butt';
+    ctx.strokeStyle = 'rgba(232,64,58,.3)';
+    ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.stroke();
+    ctx.strokeStyle = 'rgba(31,163,90,.6)';
+    ctx.beginPath(); ctx.arc(x, y, r, top - TAU * safeHalf(), top + TAU * safeHalf()); ctx.stroke();
+    const a = top + TAU * st.mark;
+    ctx.fillStyle = inSafe(st.mark) ? '#1FA35A' : '#E8403A';
+    ctx.beginPath(); ctx.arc(x + Math.cos(a) * r, y + Math.sin(a) * r, r * 0.22, 0, TAU); ctx.fill();
+  }
+
+  function drawTeams(now) {
+    const { C, c } = geo();
+    const size = C * 0.022;
+    const racing = g.phase === 'race';
+    const ps = passers();
+    TEAMS.forEach(t => {
+      const st = g.state[t.id];
+      if (!st || !st.active) return;
+
+      // 코치 (대기 구역, 트랙 밖)와 대기 줄의 선수들 (다리 벌리고 서 있어요)
+      // 코치: 주자가 후프를 들고 오면 같이 잡고 줄을 따라 옮기고, 끝나면 대기 구역으로
+      const holding = st.mode === 'pass';
+      if (!holding) { const cs = coachSpot(t); drawCoach(t, cs.x, cs.y, size * 0.8); }   // 통과 중엔 후프 위에 그려요
+      ps.forEach((no, i) => {
+        const q = lineSpot(t, i);
+        const f = st.flash[i] ? Math.max(0, 1 - (performance.now() - st.flash[i]) / 350) : 0;   // 방금 통과하면 잠깐 커져요
+        drawRunner(t, q.x, q.y, t.angle + Math.PI / 4 + Math.PI, size * (0.62 + 0.25 * f), 0, { label: no });
+      });
+      // 첫 번째 대기 라인: #1·#2 는 이 선 앞(코치 바로 옆)에 서요
+      {
+        const { m } = geo();
+        const a = cornerOf(t), b = cornerOf(TEAMS[(TEAMS.indexOf(t) + 1) % 4]);
+        const side = t.angle + Math.PI / 4;
+        const lp = lineSpot(t, -0.5), lp2 = lineSpot(t, 1.5);
+        const ox = Math.cos(side), oy = Math.sin(side);
+        ctx.strokeStyle = '#16224A'; ctx.lineWidth = 3; ctx.lineCap = 'butt';
+        [lp, lp2].forEach((q, k) => {
+          ctx.beginPath(); ctx.moveTo(q.x - ox * m * 0.42, q.y - oy * m * 0.42); ctx.lineTo(q.x + ox * m * 0.55, q.y + oy * m * 0.55);
+          ctx.lineWidth = k ? 1.5 : 3; ctx.stroke();
+        });
+      }
+      // 선심: 옆 팀 대기 구역 끝
+      const jn = lineSpot(t, ps.length + 0.4);
+      ctx.beginPath(); ctx.arc(jn.x, jn.y, size * 0.55, 0, TAU); ctx.fillStyle = '#fff'; ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = '#16224A'; ctx.stroke();
+      ctx.fillStyle = '#16224A'; ctx.font = font(size * 0.7); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('J', jn.x, jn.y + 1);
+
+      // 후프: 처음엔 팀 삼각 구역에
+      const hh = hoopHome(t), hr = C * 0.032;
+      if (st.mode === 'lap' || st.mode === 'grab') hoop(hh.x, hh.y, FLAT_R(), t.color, 1);   // 바닥에 놓인 후프 (위에서 본 원)
+
+      // 주자
+      let p;
+      if (st.mode === 'lap') p = lanePos(t, st.s);
+      else if (st.mode === 'pass') {
+        const h = hoopAt(t, st.u);
+        p = { x: h.x, y: h.y, dir: t.angle + Math.PI / 4 };
+        // 후프를 세워 들고 줄을 따라 옮겨요: 줄과 직각으로 선 고리 (위에서 보면 가는 타원)
+        const q = lineSpot(t, st.u);
+        const a = cornerOf(t), b = cornerOf(TEAMS[(TEAMS.indexOf(t) + 1) % 4]);
+        const along = Math.atan2(b.y - a.y, b.x - a.x);
+        ctx.save(); ctx.translate(q.x, q.y); ctx.rotate(along);
+        hoopUpright(HOOP_R());
+        ctx.restore();
+        // 코치가 후프 바깥쪽 끝을, 주자가 안쪽 끝을 잡아요
+        const ch = coachHold(t, st.u);
+        drawCoach(t, ch.x, ch.y, size * 0.55);
+        // 가는 방향 화살표
+        const ax = q.x + Math.cos(along) * st.way * size * 1.4, ay = q.y + Math.sin(along) * st.way * size * 1.4;
+        ctx.strokeStyle = '#16224A'; ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+        const dirA = along + (st.way > 0 ? 0 : Math.PI), hs = size * 0.5;
+        ctx.beginPath();
+        ctx.moveTo(ax + Math.cos(dirA + 2.5) * hs, ay + Math.sin(dirA + 2.5) * hs); ctx.lineTo(ax, ay);
+        ctx.lineTo(ax + Math.cos(dirA - 2.5) * hs, ay + Math.sin(dirA - 2.5) * hs); ctx.stroke();
+      } else if (st.mode === 'place') p = { ...pinStand(t), dir: t.angle + Math.PI };
+      else p = legPos(t, st.mode, st.d);
+
+      drawRunner(t, p.x, p.y, p.dir, size, st.legPhase, {
+        moving: racing && st.v > 0.05 && ['lap', 'grab', 'toLine', 'toPin', 'go'].includes(st.mode),
+        speed: st.mode === 'lap' ? st.v / LAP_VMAX : st.v / WALK_VMAX(),
+        label: RUNNER_NO[g.match.heat - 1], faded: st.dq,
+      });
+      // 들고 가는 후프
+      if (st.mode === 'toLine' || st.mode === 'toPin') hoop(p.x, p.y - size * 0.2, hr, t.color, 0.5);
+
+      if (st.mode === 'place' && racing && !st.dq) {
+        const rp = ringPinOf(t);
+        if (!st.retry) { hoop(rp.x, rp.y - C * 0.03, hr, t.color, 0.4); drawMark(rp.x, rp.y - C * 0.01, size * 1.7, st); }
+        warnLabel(p.x + (p.x - c) * 0.15, p.y + (p.y - c) * 0.15, st.retry ? '다시!' : (inSafe(st.mark) ? '지금!' : '핀 조심'), !st.retry && inSafe(st.mark));
+      }
+      if (st.mode === 'go' && racing && st.d > legPos(t, 'go', 0).L * 0.4) {
+        const fast = st.v / WALK_VMAX() > FINISH_MAX;
+        warnLabel(p.x + (c - p.x) * 0.2, p.y + (c - p.y) * 0.2, fast ? '살살!' : '좋아요', !fast);
+      }
+      if (st.dq) {
+        ctx.strokeStyle = '#E8403A'; ctx.lineWidth = Math.max(3, size * 0.25); ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(p.x - size, p.y - size); ctx.lineTo(p.x + size, p.y + size);
+        ctx.moveTo(p.x + size, p.y - size); ctx.lineTo(p.x - size, p.y + size);
+        ctx.stroke();
+      }
+    });
+  }
+
+  g.run();
+})();
+</script>
+<script>
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    addEventListener('load', () => navigator.serviceWorker.register('../sw.js', { scope: '../' }));
+  }
+</script>
+</body>
+</html>

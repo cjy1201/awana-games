@@ -189,7 +189,7 @@
   // 우리 팀 변 가운데 방향으로 한 줄. 바깥부터: 출발 자리(서클 라인 밖) → 사각박스(서클 라인 안) → 중앙 삼각형
   const sideOf = t => t.angle + ZC;
   const startR = () => { const { R, band } = geo(); return R + band * 0.4; };    // 서클 라인 밖 (앞줄)
-  const boxR2 = () => { const { R, C } = geo(); return R - C * 0.04; };          // 사각박스: 서클 라인 안쪽
+  const boxR2 = () => g.boxR();                                                  // 사각박스: 서클 라인 안쪽 네모칸
   const triR = () => geo().box * 0.6;                                            // 중앙 작은 삼각형 안 (색깔선 안쪽)
   const startSpot = t => at(sideOf(t), startR());
   const boxSpot = t => at(sideOf(t), boxR2());
@@ -337,24 +337,12 @@
 
   // ---------- 그리기 ----------
   function draw(now) {
-    g.drawCourt({ track: drawBoxes });
+    g.drawCourt();
     drawPins(now);
     drawTeams(now);
   }
 
   // 사각박스: 서클 라인 안쪽
-  function drawBoxes(on) {
-    const { C } = geo();
-    TEAMS.forEach(t => {
-      if (!on(t)) return;
-      const q = boxSpot(t), h = C * 0.028;
-      ctx.save(); ctx.translate(q.x, q.y); ctx.rotate(sideOf(t));
-      ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.fillRect(-h, -h, h * 2, h * 2);
-      ctx.strokeStyle = '#16224A'; ctx.lineWidth = 2; ctx.strokeRect(-h, -h, h * 2, h * 2);
-      ctx.restore();
-    });
-  }
-
   function drawPins(now) {
     const { C } = geo();
     TEAMS.forEach(t => {

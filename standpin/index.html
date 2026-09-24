@@ -155,7 +155,7 @@
   const DECAY = 1.6;
   const LAP_VMAX = TAU / 4.2;            // 한 바퀴 약 4.2초
   const GO_VMAX = () => g.geo().C * 0.45; // 핀 세운 뒤 가운데로 (px/초)
-  const FINISH_MAX = 0.5;                // 종료 핀에 이보다 빠르게 닿으면 발로 넘어뜨린 것 → 실격
+  const FINISH_MAX = Court.FINISH_SAFE;  // 종료 핀에 이보다 빠르게 닿으면 발로 넘어뜨린 것일 수 있어요 (확률)
   const WALK = 0.3;
   // 핀 세우기: 꾹 누르고 있으면 누운 핀(90°)이 일어나 똑바로(0°)를 지나 반대쪽(-90°)으로 넘어가요.
   // 똑바로 근처에서 떼면 서요. 모래가 머리 쪽에 있어서 살짝 흔들려요.
@@ -175,7 +175,7 @@
     resultSub: (t, h) => `${h.time.toFixed(1)}초 · 핀 세우기 ${g.state[t.id].tries}번째에 성공`,
     teamState: () => ({
       mode: 'lap',                // lap 한 바퀴 · stand 핀 세우기 · go 가운데로
-      s: 0, v: 0, legPhase: 0,
+      s: Court.START_S, v: 0, legPhase: 0,   // 출발선 바로 뒤에서
       holding: false, holdT: 0,
       tilt: 90, side: 1,          // 핀 기울기(도): 90 = 누움, 0 = 똑바로
       retry: 0, tries: 0, stood: false,
@@ -316,7 +316,7 @@
         st.legPhase += st.v * dt * 0.14;
         if (st.d >= L) {
           st.d = L;
-          if (st.v / GO_VMAX() > FINISH_MAX) { st.pinFall = 0.001; disqualify(t, '종료 핀을 발로 넘어뜨림'); }
+          if (g.slideFoul(st.v / GO_VMAX())) { st.pinFall = 0.001; disqualify(t, '종료 핀을 발로 넘어뜨림'); }
           else g.knockPin(t);
           continue;
         }

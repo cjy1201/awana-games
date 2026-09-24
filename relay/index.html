@@ -165,7 +165,7 @@
   const PASS_MAX = VMAX * 0.8;     // 이보다 빠르게 핀 옆을 지나면 핀이 넘어질 수 있어요 (넘어지면 실격)
   const TURN_WARN = 0.8;           // 마지막 주자: 우리 팀 핀 돌기 전 "천천히!"
   const TURN_MAX = VMAX * 0.55;
-  const FINISH_MAX = VMAX * 0.5;   // 종료 핀에 이보다 빠르게 닿으면 슬라이딩 실격
+  const FINISH_MAX = VMAX * Court.FINISH_SAFE;   // 이보다 빠르게 닿으면 슬라이딩 실격일 수 있어요 (확률)
   const WALK = VMAX * 0.3;         // 핀 앞 경고 구간에서는 걸어서라도 가요
 
   const settings = { teams: new Set(['red', 'blue', 'green', 'yellow']), runners: 5, heats: 2, pinlevel: 1 };
@@ -180,7 +180,7 @@
     settings, chips: ['runners', 'heats', 'pinlevel'],
     heatName: '조', goText: '출발!', idleText: '톡톡! 빠르게', nextReady: '출발 준비',
     heatTitle: () => ` (No${runnerNo({ runner: 0 })}~No${runnerNo({ runner: settings.runners - 1 })})`,
-    teamState: () => ({ runner: 0, s: 0, v: 0, legPhase: 0, warn: null }),
+    teamState: () => ({ runner: 0, s: Court.START_S, v: 0, legPhase: 0, warn: null, moved: false }),
     onReset: () => { ringFall = {}; wobble = {}; },
     padText: st => WARN_TEXT[st.warn] || (isLast(st) ? '핀까지!' : '톡톡!'),
     tap, race, tick, draw,
@@ -200,6 +200,7 @@
     if (!g.tapGap(st)) return;
     if (inZone(st)) { handoff(t); return; }   // 배턴 존 안에서 누르면 배턴 터치
     st.v = Math.min(VMAX, st.v + BOOST);
+    st.moved = true;
     sfx.tap(t.note);
   }
 
@@ -235,7 +236,7 @@
       const st = g.state[t.id];
       if (!st.active || st.finished || st.dq) continue;
       st.v *= Math.exp(-DECAY * dt);
-      if (st.warn && st.warn !== 'zone' && st.v < WALK) st.v = WALK;   // 손을 떼도 걸어서는 지나가요
+      if (st.moved && st.warn && st.warn !== 'zone' && st.v < WALK) st.v = WALK;   // 손을 떼도 걸어서는 지나가요 (출발 전엔 가만히)
       const prev = st.s;
       st.s += st.v * dt;
       st.legPhase += st.v * dt * 14;
@@ -271,14 +272,14 @@
         const { L } = finalPath(t);
         if ((st.s - TAU) * laneR >= L) {
           st.s = TAU + L / laneR;
-          if (st.v > FINISH_MAX) {
+          if (g.slideFoul(st.v / VMAX)) {
             st.pinFall = 0.001;
             disqualify(t, '슬라이딩으로 종료 핀을 넘어뜨림');
           } else { st.warn = null; g.knockPin(t); }
           continue;
         }
       }
-      const w = warnOf(st);
+      const w = st.moved ? warnOf(st) : null;   // 처음 톡 하기 전엔 '톡톡!'
       if (w !== st.warn) { st.warn = w; updatePads(); }
     }
   }
@@ -304,7 +305,7 @@
 
   // ---------- 그리기 ----------
   function draw(now) {
-    g.drawCourt({ track: on => { drawBatonZones(on); g.drawWaitBoxes(on); }, startLines: true });
+    g.drawCourt({ track: drawBatonZones, startLines: true });
     drawPins(now);
     drawTeams(now);
   }

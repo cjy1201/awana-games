@@ -66,7 +66,11 @@ window.Court = (() => {
 
   // 트랙 좌표 s: 출발선에서 시계 반대 방향으로 간 거리(라디안). 원 위 핀은 s = 0, π/2, π, 3π/2 에 있어요.
   const ZC = Math.PI / 4;      // 네모칸(배턴 존) 가운데 = 출발선 45° 전 (우리 팀 변의 가운데)
+  const START_S = -0.1;        // 출발 자리: 출발선 바로 뒤 (선을 밟지 않게)
   const MIN_TAP_GAP = 55;      // 이보다 빠른 연타는 한 번으로 쳐요 (ms)
+  // 종료 핀 슬라이딩: 최고 속도의 FINISH_SAFE 배 넘게 빠르면, 빠를수록 최대 FINISH_CHANCE 확률로 실격
+  const FINISH_SAFE = 0.6;
+  const FINISH_CHANCE = 0.3;
 
   function hexA(hex, a) {
     const n = parseInt(hex.slice(1), 16);
@@ -171,7 +175,9 @@ window.Court = (() => {
     // 원 위 색깔 핀: 서클 라인과 팀 대각선이 만나는 곳
     function ringPinOf(t) { return at(t.angle, geo().R); }
     // ⑤ 네모칸: 서클 라인 안쪽, 우리 팀 변 가운데 방향
-    const boxR = () => geo().R - geo().C * 0.04;
+    // ⑤ 네모칸: 바깥 변이 서클 라인에 붙어 있어요 (서클 라인 두께 절반만큼 안쪽)
+    const BOX_H = () => geo().C * 0.026;
+    const boxR = () => { const { R, C } = geo(); return R - BOX_H() - Math.max(2, C * 0.005); };
     function cornerOf(t) {
       const { C } = geo();
       return at(t.angle, C / Math.SQRT2);
@@ -484,6 +490,13 @@ window.Court = (() => {
       if (g.banner.t > 0) g.banner.t -= dt;
     }
 
+    // 종료 핀에 닿을 때 속도(최고 속도 대비 0~1)로 슬라이딩 실격인지 정해요
+    function slideFoul(speed) {
+      if (speed <= FINISH_SAFE) return false;
+      const over = Math.min(1, (speed - FINISH_SAFE) / (1 - FINISH_SAFE));
+      return Math.random() < FINISH_CHANCE * (0.4 + 0.6 * over);
+    }
+
     // 종료 핀을 넘어뜨리면 등수가 정해져요
     function knockPin(t) {
       const st = g.state[t.id];
@@ -555,7 +568,7 @@ window.Court = (() => {
     // ---------- 그리기 ----------
     // track(on): 달리는 길 위, 대각선 아래에 그릴 게임 고유 표시 (배턴 존, 네모칸)
     // startLines: 출발선 + 방향 표시
-    function drawCourt({ track, startLines } = {}) {
+    function drawCourt({ track, startLines, boxes } = {}) {
       const { m, C, c, R, band, laneR, box } = geo();
       const S = g.S;
       const on = t => g.state[t.id]?.active !== false;
@@ -589,6 +602,7 @@ window.Court = (() => {
       ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fill();
 
       if (track) track(on);
+      if (boxes !== false) drawWaitBoxes(on);   // 네모칸은 경기장 기본 선이라 모든 게임에 그려요
 
       // 대각선
       TEAMS.forEach(t => {
@@ -644,13 +658,11 @@ window.Court = (() => {
 
     // ⑤ 네모칸: 서클 라인 안쪽 (drawCourt 의 track 에서 불러요)
     function drawWaitBoxes(on) {
-      const { C } = geo();
       TEAMS.forEach(t => {
-        if (!on(t)) return;
         const q = at(t.angle + ZC, boxR());
-        const h = C * 0.026;
+        const h = BOX_H();
         ctx.save(); ctx.translate(q.x, q.y); ctx.rotate(t.angle + ZC);
-        ctx.strokeStyle = '#16224A'; ctx.lineWidth = 2;
+        ctx.strokeStyle = on(t) ? '#16224A' : 'rgba(22,34,74,.35)'; ctx.lineWidth = 2;
         ctx.strokeRect(-h, -h, h * 2, h * 2);
         ctx.restore();
       });
@@ -829,12 +841,12 @@ window.Court = (() => {
 
     return Object.assign(g, {
       ac, tone, sfx,
-      geo, at, pinOf, ringPinOf, boxR, cornerOf, finalPath, posOf, ringTeamAt,
-      resetState, updatePads, refreshPad, say, shakePad, tapGap, burst, knockPin,
+      geo, at, pinOf, ringPinOf, boxR, BOX_H, cornerOf, finalPath, posOf, ringTeamAt,
+      resetState, updatePads, refreshPad, say, shakePad, tapGap, burst, knockPin, slideFoul,
       drawCourt, drawWaitBoxes, drawOnePin, drawRunner, drawCoach, warnLabel,
       run,
     });
   }
 
-  return { TAU, reduceMotion, TEAMS, POINTS, ZC, hexA, font, easeOut, create };
+  return { TAU, reduceMotion, TEAMS, POINTS, ZC, START_S, FINISH_SAFE, hexA, font, easeOut, create };
 })();

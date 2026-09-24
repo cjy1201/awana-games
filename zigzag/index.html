@@ -147,7 +147,7 @@
   const DECAY = 1.6;
   const VMAX = () => g.geo().C * 0.55;          // 최고 속도 (px/초)
   const LOOP_MAX = 0.55;                        // 핀을 돌 때 이 비율보다 빠르면 핀이 넘어질 수 있어요
-  const FINISH_MAX = 0.5;                       // 종료 핀에 이보다 빠르게 닿으면 슬라이딩 실격
+  const FINISH_MAX = Court.FINISH_SAFE;         // 종료 핀에 이보다 빠르게 닿으면 슬라이딩 실격일 수 있어요 (확률)
   const WALK = 0.3;                             // 핀 돌기·가운데로 들어갈 때는 손을 떼도 걸어서 가요
   const LOOP_CHANCE = [0.08, 0.2, 0.45];        // 쉬움 · 보통 · 어려움 (최고 속도로 돌 때 핀이 넘어질 확률)
   const PLAYER_NOS = [1, 3, 8, 10];             // 1조 No1, 2조 No3, 3조 No8, 4조 No10
@@ -162,7 +162,7 @@
     heatTitle: h => ` (No${PLAYER_NOS[h - 1] || h})`,
     points: [200, 100],
     resultSub: (t, h) => `${h.time.toFixed(1)}초`,
-    teamState: () => ({ d: 0, v: 0, legPhase: 0, zone: null, checked: {} }),
+    teamState: () => ({ d: 0, v: 0, legPhase: 0, zone: null, checked: {}, moved: false }),
     onReset: () => { ringFall = {}; wobble = {}; pathCache = { key: '', paths: {} }; },
     padText, padDots: () => [], tap, race, tick, draw,
     progress: (st, t) => st.d / (pathOf(t).L || 1),
@@ -183,6 +183,8 @@
     const rl = laneR - R;                    // 핀을 도는 작은 원 반지름
     const pts = [], loops = [];
     const push = p => pts.push(p);
+    // 출발선 바로 뒤에서 출발해 출발선까지
+    for (let i = 0; i < 4; i++) push(at(t.angle - Court.START_S * (1 - i / 4), laneR));
     for (let k = 0; k < 4; k++) {
       const a = t.angle - k * Math.PI / 2;   // k번째 핀 (시계 반대 방향 차례)
       const P = at(a, R);
@@ -237,6 +239,7 @@
   function tap(t, st) {
     if (!g.tapGap(st)) return;
     st.v = Math.min(VMAX(), st.v + VMAX() * 0.2);
+    st.moved = true;
     sfx.tap(t.note);
   }
 
@@ -258,7 +261,7 @@
       if (!st.active || st.finished || st.dq) continue;
       const path = pathOf(t);
       st.v *= Math.exp(-DECAY * dt);
-      if (st.zone && st.v < VMAX() * WALK) st.v = VMAX() * WALK;   // 손을 떼도 걸어서는 가요
+      if (st.moved && st.zone && st.v < VMAX() * WALK) st.v = VMAX() * WALK;   // 손을 떼도 걸어서는 가요 (출발 전엔 가만히)
       const before = st.d;
       st.d += st.v * dt;
       st.legPhase += st.v * dt * 0.14;
@@ -291,11 +294,11 @@
       // 종료 핀 도착: 너무 빠르면 슬라이딩 실격
       if (st.d >= path.L) {
         st.d = path.L;
-        if (st.v / VMAX() > FINISH_MAX) { st.pinFall = 0.001; disqualify(t, '슬라이딩으로 종료 핀을 넘어뜨림'); }
+        if (g.slideFoul(st.v / VMAX())) { st.pinFall = 0.001; disqualify(t, '슬라이딩으로 종료 핀을 넘어뜨림'); }
         else g.knockPin(t);
         continue;
       }
-      const z = zoneOf(t, st.d);
+      const z = st.moved ? zoneOf(t, st.d) : null;   // 처음 톡 하기 전엔 '톡톡!'
       if (z !== st.zone) { st.zone = z; updatePads(); }
       refreshPad(t);
     }

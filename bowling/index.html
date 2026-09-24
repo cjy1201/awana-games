@@ -178,7 +178,7 @@
     isOver: () => TEAMS.some(t => g.state[t.id].finished),   // 중앙 핀은 하나, 먼저 넘어뜨리면 끝
     teamState: () => ({
       mode: 'lap',                   // lap 한 바퀴 · aim 조준 · throw 날아가는 중 · fetch 주워 오기
-      s: 0, v: 0, legPhase: 0,
+      s: Court.START_S, v: 0, legPhase: 0,   // 출발선 바로 뒤에서
       charging: false, chargeT: 0, power: 0,
       fly: 0, from: null, to: null, hit: false,
       fetchD: 0, fetchL: 0,

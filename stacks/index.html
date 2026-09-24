@@ -159,7 +159,7 @@
     heatTitle: h => ` (${(RUNNER_NOS[h - 1] || []).map(n => 'No' + n).join('·')})`,
     resultSub: (t, h) => `${h.time.toFixed(1)}초 · 무너짐 ${g.state[t.id].topples}번`,
     teamState: () => ({
-      runner: 0, s: 0, v: 0, legPhase: 0,
+      runner: 0, s: Court.START_S, v: 0, legPhase: 0,   // 1번은 출발선 바로 뒤에서
       mode: 'run',               // run 달리기 · stack 컵 쌓기 · topple 무너진 컵 모으기
       station: 0,                // 이번 바퀴에서 다음에 쌓을 출발선 (0 = 우리 팀)
       step: 0,                   // 0~2 컵 올리기 · 3 짝! · 4 포개기
@@ -354,7 +354,7 @@
 
       // 기다리는 선수: 서클 안 우리 팀 구역
       for (let i = st.runner + 1, k = 0; i < RUNNERS; i++, k++) {
-        const q = at(side, boxR() - size * (0.4 + k * 1.7));
+        const q = at(side, boxR() - g.BOX_H() - size * (1.0 + k * 1.7));
         drawRunner(t, q.x, q.y, side, size * 0.75, 0, { label: runnerNo(st, i) });
       }
 
