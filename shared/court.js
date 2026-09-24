@@ -95,6 +95,7 @@ window.Court = (() => {
   //   race(dt)         달리는 중 매 프레임,  tick(dt) 매 프레임 (핀 넘어짐 등)
   //   draw(now)        트랙·핀·선수 그리기,  progress(st, t) 달리는 중 순위용 진행도
   //   points      등수별 점수 (기본 [400, 200])
+  //   heatScore(t, st)  등수 대신 이 판에서 얻은 점수를 바로 줄 때 (컬링: 후프 안 100 · 닿으면 50)
   //   isOver()    경기가 끝났는지 (기본: 모든 팀이 끝나거나 실격). 한 팀만 이기면 끝나는 게임에서 써요
   function create(opts) {
     const settings = opts.settings;
@@ -521,7 +522,7 @@ window.Court = (() => {
       const heatRow = {};
       actives.forEach(t => {
         const st = g.state[t.id];
-        const pts = st.dq ? 0 : (points[st.rank - 1] || 0);
+        const pts = st.dq ? 0 : (opts.heatScore ? opts.heatScore(t, st) : (points[st.rank - 1] || 0));
         heatRow[t.id] = { rank: st.rank, dq: st.dq, reason: st.dqReason, time: st.time, pts };
       });
       if (match.history.length < match.heat) {

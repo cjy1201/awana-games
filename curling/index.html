@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Sparks 컬링</title>
+<meta name="description" content="2026 어와나 올림픽 Sparks 컬링 규칙을 옮긴 네 팀 게임: 신호 뒤 3초 안에 콩주머니를 가운데 후프로 던져요">
+<meta name="theme-color" content="#16224A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AWANA 게임">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" type="image/png" href="../icons/favicon.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="preload" href="../fonts/jua.woff" as="font" type="font/woff" crossorigin>
+<link rel="stylesheet" href="../shared/court.css">
+<style>
+  /* 한 조 3명: 버튼의 작은 동그라미 3개 = 콩주머니 3개 */
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <canvas id="court" aria-label="AWANA 게임 트랙"></canvas>
+
+  <button class="pad" data-team="red" aria-label="빨강 팀 버튼"><div class="pad-inner"><span class="pad-name">빨강</span><span class="pad-runners"></span><span class="pad-state">준비</span></div></button>
+  <button class="pad" data-team="blue" aria-label="파랑 팀 버튼"><div class="pad-inner"><span class="pad-name">파랑</span><span class="pad-runners"></span><span class="pad-state">준비</span></div></button>
+  <button class="pad" data-team="green" aria-label="초록 팀 버튼"><div class="pad-inner"><span class="pad-name">초록</span><span class="pad-runners"></span><span class="pad-state">준비</span></div></button>
+  <button class="pad" data-team="yellow" aria-label="노랑 팀 버튼"><div class="pad-inner"><span class="pad-name">노랑</span><span class="pad-runners"></span><span class="pad-state">준비</span></div></button>
+
+  <div id="tools">
+    <a class="tool" href="../" aria-label="게임 모음으로">← 게임 모음</a>
+    <button class="tool" id="helpBtn" type="button">게임 방법</button>
+    <button class="tool" id="soundBtn" type="button" aria-pressed="true">소리 켜짐</button>
+  </div>
+
+  <!-- 게임 방법 + 설정 -->
+  <div class="overlay" id="intro">
+    <div class="sheet">
+      <h1>Sparks<span class="stripe" aria-hidden="true"><b style="background:var(--red)"></b><b style="background:var(--blue)"></b><b style="background:var(--green)"></b><b style="background:var(--yellow)"></b></span>컬링</h1>
+      <p class="scoreline"><b>2개 조</b> (1조 No2·No4·No6 · 2조 No5·No7·No9) · 콩주머니 3개 · <b>후프 안 100점 · 후프에 닿으면 50점</b></p>
+
+      <div class="steps">
+        <div class="step">
+          <svg viewBox="0 0 96 96" aria-hidden="true">
+            <circle cx="48" cy="48" r="30" fill="#fff" stroke="#16224A" stroke-width="3"/>
+            <text x="48" y="45" text-anchor="middle" font-family="Jua, sans-serif" font-size="16" fill="#5A6689">준비…</text>
+            <text x="48" y="66" text-anchor="middle" font-family="Jua, sans-serif" font-size="18" fill="#E8403A">던져! 3</text>
+          </svg>
+          <strong>주심 신호를 기다려요</strong>
+          <span>“던져!” 전에 던지면 반칙,<br>신호 뒤 3초 안에 던져요</span>
+        </div>
+        <div class="step">
+          <svg viewBox="0 0 96 96" aria-hidden="true">
+            <circle cx="48" cy="48" r="30" fill="none" stroke="rgba(22,34,74,.18)" stroke-width="10"/>
+            <path d="M48 18 A30 30 0 1 1 22 63" fill="none" stroke="#16224A" stroke-width="7"/>
+            <path d="M31 72 A30 30 0 0 1 20 58" fill="none" stroke="#1FA35A" stroke-width="10"/>
+            <circle cx="48" cy="48" r="14" fill="#E8403A" stroke="#fff" stroke-width="3"/>
+            <text x="48" y="54" text-anchor="middle" font-family="Jua, sans-serif" font-size="14" fill="#fff">꾹</text>
+          </svg>
+          <strong>꾹 누르고 초록에서 떼기</strong>
+          <span>힘이 차오르다가 초록 칸에서 떼면<br>후프 한가운데로 가요</span>
+        </div>
+        <div class="step">
+          <svg viewBox="0 0 96 96" aria-hidden="true">
+            <circle cx="48" cy="48" r="32" fill="rgba(17,17,17,.06)" stroke="#111" stroke-width="5"/>
+            <rect x="36" y="38" width="20" height="14" rx="5" fill="#2F6FE4" stroke="#16224A" stroke-width="2.5"/>
+            <rect x="64" y="70" width="20" height="14" rx="5" fill="#1FA35A" stroke="#16224A" stroke-width="2.5"/>
+            <text x="46" y="30" text-anchor="middle" font-family="Jua, sans-serif" font-size="13" fill="#111">100</text>
+            <text x="80" y="64" text-anchor="middle" font-family="Jua, sans-serif" font-size="13" fill="#16224A">50</text>
+          </svg>
+          <strong>후프 안 100 · 닿으면 50</strong>
+          <span>세 명이 모두 던진 뒤<br>떨어진 자리로 점수를 매겨요</span>
+        </div>
+        <div class="step">
+          <svg viewBox="0 0 96 96" aria-hidden="true">
+            <circle cx="44" cy="48" r="30" fill="none" stroke="#111" stroke-width="5" stroke-dasharray="3 0"/>
+            <circle cx="52" cy="48" r="30" fill="none" stroke="rgba(17,17,17,.25)" stroke-width="3" stroke-dasharray="5 5"/>
+            <rect x="30" y="42" width="18" height="13" rx="5" fill="#F5C21B" stroke="#16224A" stroke-width="2.5"/>
+            <rect x="58" y="40" width="18" height="13" rx="5" fill="#2F6FE4" stroke="#16224A" stroke-width="2.5"/>
+            <path d="M78 46 h12 M84 40 l6 6 l-6 6" stroke="#16224A" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <strong>부딪히면 밀려나요</strong>
+          <span>떨어진 뒤 조금 미끄러지고, 다른 콩주머니를 맞히면 밀어내요.<br>무거운 후프도 테두리에 맞으면 살짝 움직여요</span>
+        </div>
+      </div>
+
+      <div class="foul">
+        <b>이러면 실격!</b>
+        <ul>
+          <li>콩주머니를 던질 때 라인을 밟거나 넘어가서 던지면</li>
+          <li>주심 신호 전에 던지면</li>
+          <li>주심 신호 뒤 3초 안에 못 던지거나, 3초를 넘겨서 던지면</li>
+          <li>실격된 콩주머니는 바로 치워요 (점수 없음)</li>
+        </ul>
+      </div>
+
+      <div class="settings">
+        <div class="row" role="group" aria-label="참가 팀">
+          <span class="lbl">참가 팀</span>
+          <button class="chip" type="button" data-pick="red" aria-pressed="true" style="--c:var(--red)">빨강</button>
+          <button class="chip" type="button" data-pick="blue" aria-pressed="true" style="--c:var(--blue)">파랑</button>
+          <button class="chip" type="button" data-pick="green" aria-pressed="true" style="--c:var(--green)">초록</button>
+          <button class="chip" type="button" data-pick="yellow" aria-pressed="true" style="--c:var(--yellow);--t:#16224A">노랑</button>
+        </div>
+        <div class="row" role="group" aria-label="조 편성">
+          <span class="lbl">경기</span>
+          <button class="chip" type="button" data-heats="2" aria-pressed="true">2개 조 (정식)</button>
+          <button class="chip" type="button" data-heats="1" aria-pressed="false">1개 조</button>
+        </div>
+        <div class="row" role="group" aria-label="조준 난이도">
+          <span class="lbl">조준</span>
+          <button class="chip" type="button" data-aim="0" aria-pressed="false">쉬움</button>
+          <button class="chip" type="button" data-aim="1" aria-pressed="true">보통</button>
+          <button class="chip" type="button" data-aim="2" aria-pressed="false">어려움</button>
+        </div>
+        <div class="row" role="group" aria-label="신호 전에 누르면">
+          <span class="lbl">신호 전에 누르면</span>
+          <button class="chip" type="button" data-strict="1" aria-pressed="true">반칙 (정식)</button>
+          <button class="chip" type="button" data-strict="0" aria-pressed="false">기다리기 (연습)</button>
+        </div>
+      </div>
+
+      <button class="go" id="startBtn" type="button">시작하기</button>
+      <p class="keys">2026 어와나 올림픽 규칙서 Sparks 오후 1 · 주심은 서클 안, 선심(J)은 선수 앞 · 키보드 연습: 빨강 Q · 파랑 P · 초록 M · 노랑 Z (키를 누르고 있다가 떼기)</p>
+    </div>
+  </div>
+
+  <!-- 결과 -->
+  <div class="overlay" id="result" hidden>
+    <div class="sheet">
+      <h2 id="resultTitle">경기 결과</h2>
+      <div class="podium" id="podium"></div>
+      <div class="buttons">
+        <button class="go" id="nextBtn" type="button">다음</button>
+        <button class="go ghost" id="menuBtn" type="button">설정 바꾸기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../shared/court.js"></script>
+<script>
+(() => {
+  const { TAU, TEAMS, ZC, hexA, reduceMotion, font } = Court;
+
+  // 한 판: 네 팀이 한 명씩 동시에 던져요 (3명 → 3번). 주심 신호 뒤 3초 안에 던져야 해요.
+  const THROWERS = 3;
+  const READY_TIME = 1.4;             // "준비…" (이때 던지면 신호 전 반칙)
+  const GO_TIME = 3;                  // 주심 신호 뒤 3초
+  const FLY_TIME = 0.65;              // 콩주머니가 날아가는 시간
+  const SETTLE_TIME = 1.1;            // 떨어진 자리 보여주기
+  // 힘 막대: 꾹 누르면 0 → 1 → 0 으로 오르내려요. SWEET 에서 떼면 가운데 후프 한가운데로 가요.
+  const SWING = 1.6, SWEET = 0.6, MIN_HOLD = 0.1;
+  const SPREAD = [0.012, 0.024, 0.04];   // 쉬움 · 보통 · 어려움 (옆으로 빗나가는 정도, C 배수)
+  // 떨어진 뒤 미끄러지기: 던진 힘만큼 조금 미끄러지고, 부딪히면 힘이 옮겨가요
+  const SLIDE_V = 0.2;                // 떨어질 때 미끄러지는 속도 (C/초, 한가운데 힘 기준)
+  const FRICTION = 5.5;               // 바닥 마찰 (클수록 빨리 멈춰요)
+  const BOUNCE = 0.85;                // 콩주머니끼리 부딪힐 때 힘이 옮겨가는 정도
+  const HOOP_NUDGE = 0.007;           // 후프는 무거워서 테두리에 맞아도 아주 조금만 (C 배수)
+  const THROWER_NOS = [[2, 4, 6], [5, 7, 9]];   // 1조 No2·4·6, 2조 No5·7·9
+
+  const settings = { teams: new Set(['red', 'blue', 'green', 'yellow']), heats: 2, aim: 1, strict: 1 };
+  let round = 0, step = 'ready', stepT = 0, done = false, lastCount = 0;
+  let hoop = null;      // 가운데 후프 자리 {x, y, shake} — 콩주머니가 테두리를 맞히면 밀려나요
+
+  const g = Court.create({
+    settings, chips: ['heats', 'aim', 'strict'],
+    heatName: '조', goText: '준비!', idleText: '후프 안 100점 · 닿으면 50점', nextReady: '준비',
+    heatTitle: h => ` (${(THROWER_NOS[h - 1] || []).map(n => 'No' + n).join('·')})`,
+    heatScore: (t, st) => st.score,
+    resultSub: (t, h) => g.state[t.id].marks.join(' · ') || '-',
+    isOver: () => done,
+    center: { top: 0.72, sub: 0.72, rank: 0.72, width: 1.15, subWidth: 1.15 },   // 가운데는 후프가 움직이는 자리라 글자는 바깥쪽으로
+    teamState: () => ({
+      hold: false, holdT: 0, power: 0,
+      thrown: false, foul: '',        // 이번 차례: 던졌는지, 반칙 이유
+      marks: [],                      // 던질 때마다: '100' '50' '0' '반칙'
+      score: 0,
+    }),
+    onReset: () => { round = 0; step = 'ready'; stepT = 0; done = false; lastCount = 0; bags = []; hoop = null; },
+    padText, padDots, tap, press, race, draw,
+    progress: st => st.score,
+  });
+  const { ctx, sfx, tone, geo, at, say, updatePads, refreshPad, burst, drawRunner, warnLabel } = g;
+  sfx.whoosh = () => tone(700, 0.18, 'triangle', 0.06);
+  sfx.thud = () => tone(170, 0.12, 'triangle', 0.08);
+  sfx.clack = () => tone(420, 0.06, 'square', 0.06);
+  sfx.bonk = () => { tone(260, 0.12, 'square', 0.07); tone(180, 0.16, 'triangle', 0.06, 0.05); };
+  sfx.whistle = () => { tone(1800, 0.25, 'sine', 0.06); tone(2100, 0.25, 'sine', 0.04, 0.02); };
+
+  let bags = [];   // { team, x, y, fly: {from, to, t} | null, out: 반칙으로 치운 것 }
+
+  // ---------- 자리 ----------
+  const sideOf = t => t.angle + ZC;
+  const throwSpot = t => { const { R, band } = geo(); return at(sideOf(t), R + band * 0.55); };  // 서클 라인 밖에서 던져요
+  const waitSpot = (t, k) => { const { R, band } = geo(); return at(sideOf(t) - (0.13 + k * 0.1), R + band * 0.55); };
+  const HR = () => geo().C * 0.075;   // 가운데 후프 반지름
+  const BR = () => geo().C * 0.016;   // 콩주머니 반지름
+  // 후프: 처음엔 가운데. 콩주머니에 맞으면 밀려나요
+  function hoopPos() {
+    if (!hoop) { const { c } = geo(); hoop = { x: c, y: c, shake: 0 }; }
+    return hoop;
+  }
+  // 이 팀 자리에서 지금 후프 한가운데까지 거리
+  const aimDist = t => { const s = throwSpot(t), h = hoopPos(); return Math.hypot(h.x - s.x, h.y - s.y); };
+  // 콩주머니가 후프 안에 온전히 들어가는 힘의 범위 (팀마다, 지금 후프 자리 기준)
+  // 떨어진 뒤 미끄러지는 거리까지 더해서 멈추는 자리를 계산해요
+  const slideDist = p => geo().C * SLIDE_V * Math.min(1.6, Math.max(0.4, p / SWEET)) / FRICTION;
+  const inSweet = (t, p) => { const D = aimDist(t); return Math.abs(D * p / SWEET + slideDist(p) - D) <= HR() - BR(); };
+  function scoreAt(x, y) {
+    const h = hoopPos();
+    const r = Math.hypot(x - h.x, y - h.y);
+    if (r <= HR() - BR()) return 100;
+    if (r <= HR() + BR()) return 50;
+    return 0;
+  }
+  const throwerNo = k => (THROWER_NOS[g.match.heat - 1] || [])[k] || k + 1;
+
+  // ---------- 버튼 ----------
+  function padText(st) {
+    if (st.foul) return '반칙!';
+    if (step === 'ready') return '기다려…';
+    if (step === 'go' && !st.thrown) {
+      if (!st.hold) return `꾹! ${Math.max(1, Math.ceil(GO_TIME - stepT))}`;
+      return inSweet(TEAMS.find(t => g.state[t.id] === st), st.power) ? '지금 떼!' : '초록에서 떼기';
+    }
+    return round < THROWERS - 1 ? '다음 선수' : '점수 계산';
+  }
+  function padDots(st) {
+    const dots = [];
+    for (let i = 0; i < THROWERS; i++) dots.push(i < round || (i === round && st.thrown) ? 'done' : (i === round && g.phase === 'race' ? 'now' : ''));
+    return dots;
+  }
+
+  function tap() {}   // 던지기는 꾹 누르기(press)로
+  function press(id, down) {
+    const t = TEAMS.find(x => x.id === id);
+    const st = g.state[id];
+    if (!st || !st.active || g.phase !== 'race' || done) return;
+    if (st.thrown || st.foul) { if (!down) st.hold = false; return; }
+    if (step === 'ready') {
+      if (!down) return;
+      if (settings.strict) foul(t, st, '신호 전에 던짐');           // 주심 신호 전에 던지면 실격
+      else { g.shakePad(g.pads[id]); say(`${t.name} 아직이에요! 신호를 기다려요`, t.color, 1); }
+      return;
+    }
+    if (step !== 'go') return;
+    if (down && !st.hold) { st.hold = true; st.holdT = 0; st.power = 0; refreshPad(t); }
+    else if (!down && st.hold) {
+      st.hold = false;
+      if (st.holdT < MIN_HOLD) { g.shakePad(g.pads[id]); refreshPad(t); return; }   // 톡 누른 건 던지지 않아요
+      throwBag(t, st);
+    }
+  }
+
+  // ---------- 진행 ----------
+  function foul(t, st, why) {
+    st.foul = why; st.hold = false; st.thrown = true;
+    st.marks.push('반칙');
+    sfx.foul();
+    say(`${t.name} ${why}! 이 콩주머니는 실격`, t.color, 1.4);
+    updatePads();
+  }
+  function throwBag(t, st) {
+    const { C } = geo();
+    const from = throwSpot(t), h = hoopPos();
+    const D = Math.hypot(h.x - from.x, h.y - from.y);
+    const ux = (h.x - from.x) / D, uy = (h.y - from.y) / D;
+    const d = D * st.power / SWEET;
+    const side = (Math.random() * 2 - 1) * SPREAD[settings.aim] * C;
+    const to = { x: from.x + ux * d - uy * side, y: from.y + uy * d + ux * side };
+    const { m } = geo();
+    to.x = Math.max(m + 4, Math.min(g.S - m - 4, to.x)); to.y = Math.max(m + 4, Math.min(g.S - m - 4, to.y));
+    bags.push({ team: t, x: from.x, y: from.y, fly: { from, to, t: 0 }, k: round, power: st.power / SWEET });
+    st.thrown = true;
+    sfx.whoosh();
+    updatePads();
+  }
+  // 떨어진 콩주머니가 다른 콩주머니에 닿으면 밀어내요 (컬링처럼)
+  function land(b) {
+    const from = b.fly.from;
+    b.x = b.fly.to.x; b.y = b.fly.to.y; b.fly = null;
+    sfx.thud();
+    const { C, c, R } = geo();
+    const d = Math.hypot(b.x - from.x, b.y - from.y) || 1;
+    const ux = (b.x - from.x) / d, uy = (b.y - from.y) / d;
+    const pw = Math.min(1.6, Math.max(0.4, b.power));
+    // 날아온 방향으로 조금 미끄러져요
+    b.vx = ux * C * SLIDE_V * pw; b.vy = uy * C * SLIDE_V * pw;
+    // 후프는 무거워서 테두리 위에 떨어져도 아주 조금만 밀려요
+    const h = hoopPos();
+    if (Math.abs(Math.hypot(b.x - h.x, b.y - h.y) - HR()) <= BR() * 1.3) {
+      h.x += ux * C * HOOP_NUDGE * pw; h.y += uy * C * HOOP_NUDGE * pw;
+      const hr = Math.hypot(h.x - c, h.y - c), lim = R * 0.25;
+      if (hr > lim) { h.x = c + (h.x - c) / hr * lim; h.y = c + (h.y - c) / hr * lim; }
+      h.shake = 0.6;
+      sfx.bonk();
+    }
+  }
+  // 바닥에서 미끄러지는 콩주머니: 마찰로 멈추고, 서로 부딪히면 힘이 옮겨가요 (같은 무게)
+  function slide(dt) {
+    const { C, m } = geo();
+    const rr = BR() * 2;
+    const live = bags.filter(b => !b.fly && !b.out);
+    live.forEach(b => {
+      if (!b.vx && !b.vy) return;
+      b.x += b.vx * dt; b.y += b.vy * dt;
+      const f = Math.exp(-FRICTION * dt);
+      b.vx *= f; b.vy *= f;
+      if (Math.hypot(b.vx, b.vy) < C * 0.01) { b.vx = 0; b.vy = 0; }
+      // 코트 밖으로는 안 나가요
+      b.x = Math.max(m + BR(), Math.min(g.S - m - BR(), b.x)); b.y = Math.max(m + BR(), Math.min(g.S - m - BR(), b.y));
+    });
+    for (let i = 0; i < live.length; i++) for (let j = i + 1; j < live.length; j++) {
+      const a = live[i], b = live[j];
+      const dx = b.x - a.x, dy = b.y - a.y, dist = Math.hypot(dx, dy);
+      if (dist >= rr || dist === 0) continue;
+      const nx = dx / dist, ny = dy / dist;
+      // 겹친 만큼 떼어 놓기
+      const over = (rr - dist) / 2;
+      a.x -= nx * over; a.y -= ny * over; b.x += nx * over; b.y += ny * over;
+      // 부딪히는 방향으로 다가오고 있으면 힘을 주고받아요
+      const rel = ((a.vx || 0) - (b.vx || 0)) * nx + ((a.vy || 0) - (b.vy || 0)) * ny;
+      if (rel <= 0) continue;
+      const imp = rel * (1 + BOUNCE) / 2;
+      a.vx = (a.vx || 0) - imp * nx; a.vy = (a.vy || 0) - imp * ny;
+      b.vx = (b.vx || 0) + imp * nx; b.vy = (b.vy || 0) + imp * ny;
+      if (imp > C * 0.04) { sfx.clack(); burst((a.x + b.x) / 2, (a.y + b.y) / 2, '#FFFFFF', 6); }
+    }
+  }
+  const allStill = () => bags.every(b => !b.fly && (b.out || (!b.vx && !b.vy)));
+  function finishHeat() {
+    done = true;
+    TEAMS.forEach(t => {
+      const st = g.state[t.id];
+      if (!st.active) return;
+      // 떨어진 자리 기준으로 점수 (반칙 콩주머니는 치워서 0)
+      const mine = bags.filter(b => b.team === t && !b.out);
+      st.marks = [];
+      for (let k = 0; k < THROWERS; k++) {
+        const b = mine.find(x => x.k === k);
+        st.marks.push(b ? String(scoreAt(b.x, b.y)) : '반칙');
+      }
+      st.score = mine.reduce((sum, b) => sum + scoreAt(b.x, b.y), 0);
+    });
+    // 점수로 등수 (같은 점수는 같은 등수)
+    const actives = TEAMS.filter(t => g.state[t.id].active);
+    const sorted = actives.map(t => g.state[t.id].score).sort((a, b) => b - a);
+    actives.forEach(t => {
+      const st = g.state[t.id];
+      st.rank = sorted.indexOf(st.score) + 1; st.finished = true; st.time = g.raceT;
+    });
+    const best = actives.filter(t => g.state[t.id].rank === 1);
+    sfx.pin();
+    say(best.length === 1 ? `${best[0].name} 팀 ${g.state[best[0].id].score}점! 1등` : `${best.map(t => t.name).join('·')} 공동 1등!`, best[0].color, 2.4);
+    updatePads();
+  }
+
+  function race(dt) {
+    if (done) return;
+    stepT += dt;
+    bags.forEach(b => { if (b.fly) { b.fly.t += dt / FLY_TIME; if (b.fly.t >= 1) land(b); } });
+    slide(dt);
+    if (hoop && hoop.shake) hoop.shake = Math.max(0, hoop.shake - dt * 2);
+    const actives = TEAMS.filter(t => g.state[t.id].active);
+    if (step === 'ready') {
+      if (stepT >= READY_TIME) {
+        step = 'go'; stepT = 0; lastCount = 3;
+        sfx.whistle();
+        say(`No${throwerNo(round)} 던져! 3초 안에`, '#16224A', 1.0);
+        updatePads();
+      }
+    } else if (step === 'go') {
+      actives.forEach(t => {
+        const st = g.state[t.id];
+        if (st.hold) { st.holdT += dt; st.power = (1 - Math.cos(TAU * st.holdT / SWING)) / 2; }
+        refreshPad(t);
+      });
+      const n = Math.ceil(GO_TIME - stepT);
+      if (n < lastCount && n > 0) { lastCount = n; sfx.count(); }
+      if (stepT >= GO_TIME) {                                   // 3초 끝: 아직 안 던진 팀은 반칙
+        actives.forEach(t => { const st = g.state[t.id]; if (!st.thrown) foul(t, st, '3초 안에 못 던짐'); });
+      }
+      if (actives.every(t => g.state[t.id].thrown)) { step = 'fly'; stepT = 0; }
+    } else if (step === 'fly') {
+      if (allStill()) { step = 'settle'; stepT = 0; }   // 모든 콩주머니가 멈춘 뒤에
+    } else if (step === 'settle' && stepT >= SETTLE_TIME) {
+      if (round >= THROWERS - 1) { finishHeat(); return; }
+      round++; step = 'ready'; stepT = 0;
+      actives.forEach(t => { const st = g.state[t.id]; st.thrown = false; st.foul = ''; st.hold = false; });
+      say(`다음 선수 No${throwerNo(round)} 준비…`, '#16224A', 1.2);
+      updatePads();
+    }
+  }
+
+  // ---------- 그리기 ----------
+  function draw(now) {
+    g.drawCourt({ startLines: false });
+    drawHoop();
+    drawBags();
+    drawPlayers(now);
+    drawSignal();
+  }
+
+  function drawHoop() {
+    const { C } = geo();
+    const h = hoopPos();
+    const wob = h.shake && !reduceMotion ? Math.sin(performance.now() / 30) * h.shake * C * 0.003 : 0;
+    const x = h.x + wob, y = h.y;
+    ctx.beginPath(); ctx.arc(x, y, HR(), 0, TAU);
+    ctx.fillStyle = 'rgba(17,17,17,.06)'; ctx.fill();
+    ctx.lineWidth = Math.max(4, C * 0.012); ctx.strokeStyle = '#111111'; ctx.stroke();
+    ctx.fillStyle = 'rgba(17,17,17,.55)'; ctx.font = font(C * 0.022); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('100', x, y);
+  }
+
+  function bag(t, x, y, r, tilt = 0) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(tilt);
+    ctx.fillStyle = t.color; ctx.strokeStyle = '#16224A'; ctx.lineWidth = Math.max(2, r * 0.22);
+    ctx.beginPath(); ctx.roundRect(-r, -r * 0.72, r * 2, r * 1.44, r * 0.45); ctx.fill(); ctx.stroke();
+    ctx.restore();
+  }
+  function drawBags() {
+    const { C } = geo();
+    bags.forEach(b => {
+      if (b.out) return;
+      if (b.fly) {
+        const u = Math.min(1, b.fly.t);
+        const x = b.fly.from.x + (b.fly.to.x - b.fly.from.x) * u, y = b.fly.from.y + (b.fly.to.y - b.fly.from.y) * u - Math.sin(u * Math.PI) * C * 0.06;
+        bag(b.team, x, y, BR() * (1 + 0.4 * Math.sin(u * Math.PI)), u * 7);
+      } else bag(b.team, b.x, b.y, BR(), (b.k + 1) * 0.5);
+    });
+  }
+
+  // 힘 막대: 선수를 둘러싼 원 (초록 칸에서 떼면 후프 한가운데)
+  function drawGauge(t, x, y, r, st) {
+    const top = -Math.PI / 2;
+    // 초록 칸 위치를 힘 값으로 계산
+    let lo = null, hi = null;
+    for (let p = 0; p <= 1.0001; p += 0.005) if (inSweet(t, p)) { if (lo === null) lo = p; hi = p; }
+    ctx.lineCap = 'butt'; ctx.lineWidth = r * 0.34;
+    ctx.strokeStyle = 'rgba(22,34,74,.18)';
+    ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.stroke();
+    if (lo !== null) { ctx.strokeStyle = 'rgba(31,163,90,.55)'; ctx.beginPath(); ctx.arc(x, y, r, top + TAU * lo, top + TAU * hi); ctx.stroke(); }
+    if (st.hold) {
+      ctx.strokeStyle = inSweet(t, st.power) ? '#1FA35A' : '#16224A'; ctx.lineWidth = r * 0.22;
+      ctx.beginPath(); ctx.arc(x, y, r, top, top + TAU * Math.max(0.001, st.power)); ctx.stroke();
+    }
+  }
+
+  function drawPlayers(now) {
+    const { C, c } = geo();
+    const size = C * 0.022;
+    TEAMS.forEach(t => {
+      const st = g.state[t.id];
+      if (!st || !st.active) return;
+      // 기다리는 선수들: 던지는 자리 오른쪽으로
+      for (let k = round + 1, j = 0; k < THROWERS; k++, j++) {
+        const q = waitSpot(t, j);
+        drawRunner(t, q.x, q.y, sideOf(t) + Math.PI, size * 0.7, 0, { label: throwerNo(k) });
+      }
+      const p = throwSpot(t);
+      if (done) return;
+      drawRunner(t, p.x, p.y, sideOf(t) + Math.PI, size, 0, { label: throwerNo(round) });
+      // 선심: 선수 앞
+      const j = at(sideOf(t) - 0.06, geo().R - C * 0.03);
+      ctx.beginPath(); ctx.arc(j.x, j.y, size * 0.5, 0, TAU); ctx.fillStyle = '#fff'; ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = '#16224A'; ctx.stroke();
+      ctx.fillStyle = '#16224A'; ctx.font = font(size * 0.65); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('J', j.x, j.y + 1);
+
+      if (g.phase !== 'race') return;
+      if (step === 'go' && !st.thrown) {
+        drawGauge(t, p.x, p.y, size * 2.2, st);
+        if (!st.hold) bag(t, p.x + Math.cos(sideOf(t) + Math.PI) * size * 1.1, p.y + Math.sin(sideOf(t) + Math.PI) * size * 1.1, BR() * 0.8);
+      }
+      const lx = p.x + (p.x - c) * 0.12, ly = p.y + (p.y - c) * 0.12;
+      if (st.foul) warnLabel(lx, ly, '반칙!', false);
+      else if (step === 'ready') warnLabel(lx, ly, '기다려', false);
+      else if (step === 'go' && !st.thrown && !st.hold) warnLabel(lx, ly, '꾹!', true);
+    });
+  }
+
+  // 주심 신호: 가운데 위에 큰 숫자
+  function drawSignal() {
+    if (g.phase !== 'race' || done) return;
+    const { c, R, C } = geo();
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+    const y = c - R * 0.5;
+    let text, color;
+    if (step === 'ready') { text = '준비…'; color = '#5A6689'; }
+    else if (step === 'go') { text = `던져! ${Math.max(1, Math.ceil(GO_TIME - stepT))}`; color = '#E8403A'; }
+    else return;
+    ctx.font = font(C * 0.06);
+    ctx.lineWidth = C * 0.012; ctx.strokeStyle = '#fff'; ctx.strokeText(text, c, y);
+    ctx.fillStyle = color; ctx.fillText(text, c, y);
+  }
+
+  g.run();
+})();
+</script>
+<script>
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    addEventListener('load', () => navigator.serviceWorker.register('../sw.js', { scope: '../' }));
+  }
+</script>
+</body>
+</html>
