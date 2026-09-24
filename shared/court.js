@@ -287,6 +287,13 @@ window.Court = (() => {
 
     // 게임 중에는 화면이 꺼지지 않게
     let wakeLock = null;
+    // 방문 통계에 '게임 시작' 한 번을 셉니다 (오프라인이거나 통계 스크립트가 없으면 그냥 넘어가요)
+    function countStart() {
+      try {
+        const game = location.pathname.split('/').filter(p => p && p !== 'index.html').pop() || 'game';
+        if (window.goatcounter && goatcounter.count) goatcounter.count({ path: 'start-' + game, title: document.title + ' · 시작', event: true });
+      } catch (e) {}
+    }
     async function keepAwake() {
       try { if ('wakeLock' in navigator && !wakeLock) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } } catch (e) {}
     }
@@ -296,6 +303,7 @@ window.Court = (() => {
 
     function startMatch() {
       keepAwake();
+      countStart();
       const match = g.match;
       match.heat = 1; match.scores = {}; match.history = [];
       TEAMS.forEach(t => { match.scores[t.id] = 0; });
