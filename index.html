@@ -273,6 +273,12 @@
       tags: ['4팀', '4개 조 개인전', '1등 200점'], team: 'var(--yellow)', art: 'zigzag',
     },
     {
+      id: 'standpin', ready: true, href: 'standpin/',
+      club: 'Sparks', title: 'Sparks 핀 바로 세우기',
+      desc: '한 바퀴 돌고 넘어진 우리 팀 핀을 세워요. 꾹 누르다가 똑바로 섰을 때 떼기!',
+      tags: ['4팀', '4개 조 개인전', '1등 200점'], team: 'var(--blue)', art: 'standpin',
+    },
+    {
       id: 'tug', club: 'Sparks', title: '사방 줄다리기',
       desc: '네 팀이 네 방향에서 동시에 겨뤄요.',
       tags: ['4팀'], team: 'var(--yellow)', art: 'tug',
@@ -322,6 +328,16 @@
       <circle cx="69" cy="94" r="11" fill="none" stroke="#F5C21B" stroke-width="3" stroke-dasharray="4 3"/>
       ${PIN(69, 38, .45, '#E8403A')}${PIN(131, 38, .45, '#2F6FE4')}${PIN(131, 101, .45, '#1FA35A')}${PIN(69, 101, .45, '#F5C21B')}
       ${RUNNER(58, 22, '#F5C21B')}
+    </svg>`,
+    standpin: `<svg viewBox="0 0 200 125" aria-hidden="true">
+      <path d="M100 100 L72 40 A64 64 0 0 1 128 40 Z" fill="rgba(31,163,90,.25)"/>
+      <g transform="translate(100 100) rotate(-35)">
+        <path d="M0 -60 m-9 0 a9 9 0 1 0 18 0 a9 9 0 1 0 -18 0 M-5 -50 h10 l5 18 q7 15 2 30 h-24 q-5 -15 2 -30 z" fill="#fff" stroke="#16224A" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M-6 -42 h12" stroke="#2F6FE4" stroke-width="5"/>
+      </g>
+      <path d="M58 72 q-10 -20 6 -36" stroke="#16224A" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path d="M64 36 l-8 1 l2 8" stroke="#16224A" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      ${RUNNER(150, 92, '#2F6FE4')}
     </svg>`,
     ball: `<svg viewBox="0 0 200 125" aria-hidden="true">
       <path d="M30 110 L170 20" stroke="#2F6FE4" stroke-width="4" stroke-linecap="round"/>
