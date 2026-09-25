@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>T&amp;T 지그재그 릴레이</title>
+<meta name="description" content="AWANA T&amp;T 지그재그 릴레이(2026 어와나 올림픽 규칙)를 옮긴 네 팀 게임: 서클 핀과 라바콘을 번갈아 돌며 한 바퀴, 코너에서 바통 전달">
+<meta name="theme-color" content="#16224A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AWANA 게임">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" type="image/png" href="../icons/favicon.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="preload" href="../fonts/jua.woff" as="font" type="font/woff" crossorigin>
+<link rel="stylesheet" href="../shared/court.css">
+<!-- 방문 통계 (GoatCounter: 쿠키·개인정보 없이 페이지별 방문 수만 셉니다) -->
+<script data-goatcounter="https://cjy1201.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</head>
+<body>
+
+<div id="stage">
+  <canvas id="court" aria-label="AWANA 게임 트랙"></canvas>
+
+  <button class="pad" data-team="red" aria-label="빨강 팀 버튼"><div class="pad-inner"><span class="pad-name">빨강</span><span class="pad-runners"></span><span class="pad-state">준비</span></div></button>
+  <button class="pad" data-team="blue" aria-label="파랑 팀 버튼"><div class="pad-inner"><span class="pad-name">파랑</span><span class="pad-runners"></span><span class="pad-state">준비</span></div></button>
+  <button class="pad" data-team="green" aria-label="초록 팀 버튼"><div class="pad-inner"><span class="pad-name">초록</span><span class="pad-runners"></span><span class="pad-state">준비</span></div></button>
+  <button class="pad" data-team="yellow" aria-label="노랑 팀 버튼"><div class="pad-inner"><span class="pad-name">노랑</span><span class="pad-runners"></span><span class="pad-state">준비</span></div></button>
+
+  <div id="tools">
+    <a class="tool" href="../" aria-label="게임 모음으로">← 게임 모음</a>
+    <button class="tool" id="helpBtn" type="button">게임 방법</button>
+    <button class="tool" id="soundBtn" type="button" aria-pressed="true">소리 켜짐</button>
+  </div>
+
+  <!-- 게임 방법 + 설정 -->
+  <div class="overlay" id="intro">
+    <div class="sheet">
+      <h1>T&amp;T<span class="stripe" aria-hidden="true"><b style="background:var(--red)"></b><b style="background:var(--blue)"></b><b style="background:var(--green)"></b><b style="background:var(--yellow)"></b></span>지그재그 릴레이</h1>
+      <p class="scoreline"><b>2개 조</b> (1조 No1~No5 · 2조 No6~No10) · 조마다 <b>1등 400점 · 2등 200점</b></p>
+
+      <div class="steps">
+        <div class="step">
+          <svg viewBox="0 0 96 96" aria-hidden="true">
+            <circle cx="48" cy="48" r="32" fill="none" stroke="#16224A" stroke-width="2.5"/>
+            <path d="M8 48 Q22 20 34 34 T56 20 T82 30" fill="none" stroke="#E8403A" stroke-width="3" stroke-dasharray="5 4"/>
+            <g transform="translate(20 44)"><path d="M0 -12 m-3.5 0 a3.5 3.5 0 1 0 7 0 a3.5 3.5 0 1 0 -7 0 M-2 -8 h4 l2 7 q2 5 0 9 h-8 q-2 -4 0 -9 z" fill="#fff" stroke="#16224A" stroke-width="2" stroke-linejoin="round"/></g>
+            <path d="M44 42 l6 -14 l6 14 z" fill="#F08A24" stroke="#16224A" stroke-width="2" stroke-linejoin="round"/>
+          </svg>
+          <strong>핀과 라바콘을 번갈아</strong>
+          <span>서클 핀은 바깥쪽으로 반 바퀴,<br>가운데 라바콘은 시계 방향으로 반 바퀴</span>
+        </div>
+        <div class="step">
+          <svg viewBox="0 0 96 96" aria-hidden="true">
+            <circle cx="48" cy="48" r="30" fill="#1FA35A"/>
+            <text x="48" y="44" text-anchor="middle" font-family="Jua, sans-serif" font-size="15" fill="#fff">천천히</text>
+            <text x="48" y="62" text-anchor="middle" font-family="Jua, sans-serif" font-size="15" fill="#fff">돌기!</text>
+          </svg>
+          <strong>돌 때는 천천히</strong>
+          <span>너무 빨리 돌면 핀이나 라바콘이<br>넘어질 수 있어요. 넘어뜨리면 실격!</span>
+        </div>
+        <div class="step">
+          <svg viewBox="0 0 96 96" aria-hidden="true">
+            <path d="M10 86 L50 46" stroke="#F5C21B" stroke-width="4" stroke-linecap="round"/>
+            <path d="M8 60 H40 V92" fill="none" stroke="#16224A" stroke-width="3"/>
+            <circle cx="30" cy="72" r="9" fill="#F5C21B" stroke="#fff" stroke-width="3"/>
+            <circle cx="16" cy="84" r="7" fill="#F5C21B" stroke="#fff" stroke-width="2.5" opacity=".7"/>
+            <rect x="38" y="60" width="16" height="6" rx="2" fill="#fff" stroke="#16224A" stroke-width="2" transform="rotate(-45 46 63)"/>
+          </svg>
+          <strong>코너에서 바통 전달</strong>
+          <span>한 바퀴 돌고 우리 팀 코너로 와서<br>기다리는 친구에게 바통!</span>
+        </div>
+        <div class="step">
+          <svg viewBox="0 0 96 96" aria-hidden="true">
+            <path d="M14 26 A60 60 0 0 1 60 14" fill="none" stroke="#F5C21B" stroke-width="4" stroke-dasharray="5 5"/>
+            <path d="M60 14 Q84 20 70 40 L52 62" fill="none" stroke="#F5C21B" stroke-width="4" stroke-dasharray="5 5"/>
+            <rect x="34" y="60" width="28" height="28" fill="#fff" stroke="#16224A" stroke-width="2.5"/>
+            <g transform="translate(46 80)"><path d="M0 -12 m-3.5 0 a3.5 3.5 0 1 0 7 0 a3.5 3.5 0 1 0 -7 0 M-2 -8 h4 l2 7 q2 5 0 9 h-8 q-2 -4 0 -9 z" fill="#fff" stroke="#16224A" stroke-width="2" stroke-linejoin="round"/></g>
+          </svg>
+          <strong>마지막 주자는 종료 핀까지</strong>
+          <span>한 바퀴 돌고 우리 팀 서클 핀을 돌아<br>가운데 종료 핀을 손으로 “살살”</span>
+        </div>
+      </div>
+
+      <div class="foul">
+        <b>이러면 실격!</b>
+        <ul>
+          <li>핀 · 라바콘을 돌 때 넘어뜨리거나, 정해진 자리를 크게 벗어나면 (빨리 돌수록 잘 넘어져요)</li>
+          <li>핀 · 라바콘을 돌 때 몸 전체가 정면으로 돌지 않으면</li>
+          <li>바통을 받을 때 대기 주자가 한 발로 팀 라인을 밟고 있지 않으면 (한 발은 팀 대기 라인, 한 발은 코너 밖)</li>
+          <li>종료 핀을 슬라이딩이나 점프로 넘어뜨리면 (너무 빠르게 들어가면)</li>
+        </ul>
+      </div>
+
+      <div class="settings">
+        <div class="row" role="group" aria-label="참가 팀">
+          <span class="lbl">참가 팀</span>
+          <button class="chip" type="button" data-pick="red" aria-pressed="true" style="--c:var(--red)">빨강</button>
+          <button class="chip" type="button" data-pick="blue" aria-pressed="true" style="--c:var(--blue)">파랑</button>
+          <button class="chip" type="button" data-pick="green" aria-pressed="true" style="--c:var(--green)">초록</button>
+          <button class="chip" type="button" data-pick="yellow" aria-pressed="true" style="--c:var(--yellow);--t:#16224A">노랑</button>
+        </div>
+        <div class="row" role="group" aria-label="조 편성">
+          <span class="lbl">경기</span>
+          <button class="chip" type="button" data-heats="2" aria-pressed="true">2개 조 (정식)</button>
+          <button class="chip" type="button" data-heats="1" aria-pressed="false">1개 조</button>
+        </div>
+        <div class="row" role="group" aria-label="한 조 주자 수">
+          <span class="lbl">한 조 주자</span>
+          <button class="chip" type="button" data-runners="5" aria-pressed="true">5명 (정식)</button>
+          <button class="chip" type="button" data-runners="3" aria-pressed="false">3명 (짧게)</button>
+        </div>
+        <div class="row" role="group" aria-label="핀 돌기 난이도">
+          <span class="lbl">핀 돌기</span>
+          <button class="chip" type="button" data-loop="0" aria-pressed="false">쉬움</button>
+          <button class="chip" type="button" data-loop="1" aria-pressed="true">보통</button>
+          <button class="chip" type="button" data-loop="2" aria-pressed="false">어려움</button>
+        </div>
+      </div>
+
+      <button class="go" id="startBtn" type="button">시작하기</button>
+      <p class="keys">달릴 땐 톡톡, 핀·라바콘 앞에서 “천천히!”가 뜨면 손을 떼요 · 키보드 연습: 빨강 Q · 파랑 P · 초록 M · 노랑 Z</p>
+    </div>
+  </div>
+
+  <!-- 결과 -->
+  <div class="overlay" id="result" hidden>
+    <div class="sheet">
+      <h2 id="resultTitle">경기 결과</h2>
+      <div class="podium" id="podium"></div>
+      <div class="buttons">
+        <button class="go" id="nextBtn" type="button">다음</button>
+        <button class="go ghost" id="menuBtn" type="button">설정 바꾸기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../shared/court.js"></script>
+<script>
+(() => {
+  const { TAU, TEAMS, hexA, reduceMotion, font } = Court;
+
+  // 달리기 느낌 조절값 (거리 단위: px)
+  const DECAY = 1.6;
+  const VMAX = () => g.geo().C * 0.6;           // 최고 속도 (px/초)
+  const LOOP_MAX = 0.55;                        // 핀·라바콘을 돌 때 이 비율보다 빠르면 넘어질 수 있어요
+  const WALK = 0.3;                             // "천천히!" 구간에서는 손을 떼도 걸어서 가요
+  const LOOP_CHANCE = [0.006, 0.015, 0.04];       // 쉬움 · 보통 · 어려움 (최고 속도로 돌 때 넘어질 확률, 한 바퀴에 9번 × 5명이라 낮게)
+  const PRE = () => VMAX() * (1 - LOOP_MAX) / DECAY * 1.15;        // 경고를 보고 손을 떼면 닿기 전에 충분히 느려지는 거리
+  const PRE_FINAL = () => VMAX() * (1 - Court.FINISH_SAFE) / DECAY * 1.15;
+
+  const settings = { teams: new Set(['red', 'blue', 'green', 'yellow']), heats: 2, runners: 5, loop: 1 };
+  const runnerNo = (st, i = st.runner) => (g.match.heat - 1) * 5 + i + 1;   // 1조 No1~5, 2조 No6~10
+  let fallen = {};        // 넘어진 핀·라바콘 ('pin:red' · 'cone:red' → 0..1)
+  let wobble = {};
+
+  const g = Court.create({
+    settings, chips: ['heats', 'runners', 'loop'],
+    heatName: '조', goText: '출발!', idleText: '핀·라바콘은 천천히!', nextReady: '출발 준비',
+    heatTitle: h => ` (No${(h - 1) * 5 + 1}~No${(h - 1) * 5 + settings.runners})`,
+    resultSub: (t, h) => `${h.time.toFixed(1)}초`,
+    teamState: () => ({ runner: 0, d: 0, v: 0, legPhase: 0, zone: null, checked: {}, moved: false }),
+    onReset: () => { fallen = {}; wobble = {}; pathCache = { key: '', paths: {} }; },
+    padText, tap, race, tick, draw,
+    progress: (st, t) => st.runner + st.d / (pathOf(t, st.runner).L || 1),
+  });
+  const { ctx, sfx, tone, geo, at, pinOf, ringPinOf, ringTeamAt, say, updatePads, refreshPad, burst,
+          drawOnePin, drawRunner, warnLabel } = g;
+  sfx.close = () => [300, 240].forEach((f, i) => tone(f, 0.09, 'triangle', 0.07, i * 0.09));
+
+  const isLast = (st, i = st.runner) => i === settings.runners - 1;
+
+  // ---------- 코스 ----------
+  // 서클 위 색깔 핀(s = k·π/2)은 바깥쪽으로, 그 사이 가운데 라바콘(s = k·π/2 + π/4)은 안쪽으로 번갈아 돌아요.
+  // 반지름이 cos(4s) 로 오르내리는 물결 모양 한 바퀴예요.
+  const rOut = () => geo().R + geo().C * 0.06;
+  const coneR = () => geo().R * 0.6;
+  const rIn = () => coneR() - geo().C * 0.055;
+  const weave = (t, s) => { const m = (rOut() + rIn()) / 2, a = (rOut() - rIn()) / 2; return at(t.angle - s, m + a * Math.cos(4 * s)); };
+  const coneAt = (t, k) => at(t.angle - k * Math.PI / 2 - Math.PI / 4, coneR());   // 우리 팀에서 k번째 라바콘
+  const cornerOf = t => at(t.angle, geo().C / Math.SQRT2 - geo().C * 0.03);         // 우리 팀 코너 (바통 받는 곳)
+  // 기다리는 주자: 다음 주자는 코너(한 발은 팀 라인, 한 발은 코너 밖), 나머지는 코너 옆 팀 대기 라인 바깥
+  const nextTeam = t => TEAMS[(TEAMS.indexOf(t) + 1) % 4];
+  function waitSpot(t, k) {
+    if (k === 0) return at(t.angle, geo().C / Math.SQRT2 + geo().C * 0.012);
+    const a = g.cornerOf(t), b = g.cornerOf(nextTeam(t)), out = t.angle + Math.PI / 4, m = geo().m;
+    const f = 0.02 + k * 0.045;
+    return { x: a.x + (b.x - a.x) * f + Math.cos(out) * m * 0.5, y: a.y + (b.y - a.y) * f + Math.sin(out) * m * 0.5 };
+  }
+
+  // i번째 주자의 길: (첫 주자) 출발선 / (나머지) 코너 → 물결 한 바퀴 → 코너(바통) 또는 종료 핀(마지막 주자)
+  let pathCache = { key: '', paths: {} };
+  function pathOf(t, i) {
+    const key = g.S + ':' + settings.runners;
+    if (pathCache.key !== key) pathCache = { key, paths: {} };
+    const id = t.id + i;
+    if (pathCache.paths[id]) return pathCache.paths[id];
+    const { C, R } = geo();
+    const pts = [], apex = [];
+    const line = (a, b, n) => { for (let j = 1; j <= n; j++) pts.push({ x: a.x + (b.x - a.x) * j / n, y: a.y + (b.y - a.y) * j / n }); };
+    const s0 = i === 0 ? Court.START_S * 1.3 : 0;
+    const w0 = weave(t, s0);
+    if (i === 0) pts.push(w0);
+    else { const c0 = cornerOf(t); pts.push(c0); line(c0, w0, 10); }
+    const N = 320;
+    for (let j = 1; j <= N; j++) {
+      const s = s0 + (TAU - s0) * j / N;
+      pts.push(weave(t, s));
+    }
+    // 돌아야 하는 곳: 핀(짝수) · 라바콘(홀수), 마지막은 우리 팀 핀을 한 번 더
+    for (let k = 0; k <= 8; k++) {
+      const s = k * Math.PI / 4;
+      if (s < s0 + 0.01 && k > 0) continue;
+      const j = Math.round((s - s0) / (TAU - s0) * N) + (i === 0 ? 0 : 10);
+      apex.push({ idx: Math.max(0, j), kind: k % 2 ? 'cone' : 'pin', owner: ringTeamAt(t, Math.floor(k / 2) % 4), k });
+    }
+    const lapEnd = pts.length - 1;
+    if (isLast(null, i)) {
+      // 우리 팀 핀을 돌아 가운데 종료 핀 앞으로
+      const w = pts[lapEnd];
+      const way = [w, at(t.angle - 0.16, R * 0.85), at(t.angle - 0.08, R * 0.5), at(t.angle, C * 0.11)];
+      for (let sgm = 0; sgm < way.length - 1; sgm++) {
+        const p0 = way[Math.max(0, sgm - 1)], p1 = way[sgm], p2 = way[sgm + 1], p3 = way[Math.min(way.length - 1, sgm + 2)];
+        for (let q = 1; q <= 10; q++) {
+          const u = q / 10, u2 = u * u, u3 = u2 * u;
+          const cr = kk => 0.5 * (2 * p1[kk] + (-p0[kk] + p2[kk]) * u + (2 * p0[kk] - 5 * p1[kk] + 4 * p2[kk] - p3[kk]) * u2 + (-p0[kk] + 3 * p1[kk] - 3 * p2[kk] + p3[kk]) * u3);
+          pts.push({ x: cr('x'), y: cr('y') });
+        }
+      }
+    } else line(pts[lapEnd], cornerOf(t), 10);
+    const len = [0];
+    for (let j = 1; j < pts.length; j++) len.push(len[j - 1] + Math.hypot(pts[j].x - pts[j - 1].x, pts[j].y - pts[j - 1].y));
+    const path = { pts, len, L: len[len.length - 1], apex: apex.map(a => ({ ...a, d: len[Math.min(a.idx, len.length - 1)] })) };
+    return (pathCache.paths[id] = path);
+  }
+  function posAt(t, i, d) {
+    const { pts, len, L } = pathOf(t, i);
+    d = Math.max(0, Math.min(d, L));
+    let lo = 1, hi = len.length - 1;
+    while (lo < hi) { const m = (lo + hi) >> 1; if (len[m] < d) lo = m + 1; else hi = m; }
+    const j = lo, a = pts[j - 1], b = pts[j];
+    const f = (d - len[j - 1]) / ((len[j] - len[j - 1]) || 1);
+    return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f, dir: Math.atan2(b.y - a.y, b.x - a.x) };
+  }
+  const hazKey = a => a.kind + ':' + a.owner.id;
+  function zoneOf(t, st) {
+    const p = pathOf(t, st.runner);
+    if (isLast(st) && st.d >= p.L - PRE_FINAL()) return 'final';
+    if (p.apex.some(a => st.d >= a.d - PRE() && st.d < a.d + PRE() * 0.15 && fallen[hazKey(a)] == null)) return 'loop';
+    return null;
+  }
+
+  // ---------- 버튼 ----------
+  function padText(st) {
+    if (st.zone === 'loop') return '천천히!';
+    if (st.zone === 'final') return '살살!';
+    return '톡톡!';
+  }
+
+  function tap(t, st) {
+    if (!g.tapGap(st)) return;
+    st.v = Math.min(VMAX(), st.v + VMAX() * 0.2);
+    st.moved = true;
+    sfx.tap(t.note);
+  }
+
+  // ---------- 진행 ----------
+  function disqualify(t, reason) {
+    const st = g.state[t.id];
+    st.dq = true; st.dqReason = reason; st.v = 0;
+    const p = posAt(t, st.runner, st.d);
+    burst(p.x, p.y, '#16224A', 24);
+    sfx.foul();
+    say(`${t.name} 실격! ${reason}`, t.color, 2.6);
+    updatePads();
+  }
+
+  function race(dt) {
+    for (const t of TEAMS) {
+      const st = g.state[t.id];
+      if (!st.active || st.finished || st.dq) continue;
+      const path = pathOf(t, st.runner);
+      st.v *= Math.exp(-DECAY * dt);
+      if (st.moved && st.zone && st.v < VMAX() * WALK) st.v = VMAX() * WALK;   // 손을 떼도 걸어서는 가요 (출발 전엔 가만히)
+      const before = st.d;
+      st.d += st.v * dt;
+      st.legPhase += st.v * dt * 0.14;
+
+      // 핀·라바콘을 돌 때 너무 빠르면 넘어질 수 있어요
+      for (const a of path.apex) {
+        if (before < a.d && st.d >= a.d && !st.checked[a.k]) {
+          st.checked[a.k] = true;
+          const key = hazKey(a);
+          if (fallen[key] != null) continue;
+          const sp = st.v / VMAX();
+          if (sp > LOOP_MAX) {
+            const over = Math.min(1, (sp - LOOP_MAX) / (1 - LOOP_MAX));
+            if (Math.random() < LOOP_CHANCE[settings.loop] * (0.4 + 0.6 * over)) {
+              fallen[key] = 0.001;
+              disqualify(t, a.kind === 'pin' ? `${a.owner.name} 핀을 넘어뜨림` : '라바콘을 넘어뜨림');
+              break;
+            }
+            wobble[key] = 1;
+            sfx.close();
+            say(`${t.name} 아슬아슬! ${a.kind === 'pin' ? '핀이' : '라바콘이'} 흔들려요`, t.color, 1.0);
+          }
+        }
+      }
+      if (st.dq) continue;
+
+      if (st.d >= path.L) {
+        st.d = path.L;
+        if (isLast(st)) {
+          if (g.slideFoul(sp(st))) { st.pinFall = 0.001; disqualify(t, '슬라이딩으로 종료 핀을 넘어뜨림'); }
+          else g.knockPin(t);
+          continue;
+        }
+        // 코너에서 기다리는 다음 주자에게 바통
+        st.runner++; st.d = 0; st.v *= 0.3; st.checked = {}; st.zone = null;
+        const c = cornerOf(t);
+        burst(c.x, c.y, t.color, 16);
+        if (isLast(st)) { sfx.last(); say(`${t.name} 마지막 주자 No${runnerNo(st)}!`, t.color, 1.6); }
+        else { sfx.pass(); say(`${t.name} 바통 터치! No${runnerNo(st)} 출발`, t.color, 1.2); }
+        updatePads();
+        continue;
+      }
+      const z = st.moved ? zoneOf(t, st) : null;   // 처음 톡 하기 전엔 '톡톡!'
+      if (z !== st.zone) { st.zone = z; updatePads(); }
+      refreshPad(t);
+    }
+  }
+  const sp = st => st.v / VMAX();
+
+  function tick(dt) {
+    Object.keys(fallen).forEach(k => { fallen[k] = Math.min(1, fallen[k] + dt * 3); });
+    Object.keys(wobble).forEach(k => { wobble[k] = Math.max(0, wobble[k] - dt * 1.2); });
+  }
+
+  // ---------- 그리기 ----------
+  function draw(now) {
+    g.drawCourt({ track: drawHint, startLines: true });
+    drawPins(now);
+    drawTeams(now);
+  }
+
+  // 물결 코스 안내 (점선)
+  function drawHint(on) {
+    const any = TEAMS.find(t => on(t)) || TEAMS[0];
+    ctx.setLineDash([4, 6]); ctx.strokeStyle = 'rgba(22,34,74,.28)'; ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let j = 0; j <= 360; j++) { const p = weave(any, TAU * j / 360); if (j) ctx.lineTo(p.x, p.y); else ctx.moveTo(p.x, p.y); }
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+
+  function drawCone(x, y, h, fall, shake, now) {
+    ctx.save(); ctx.translate(x, y + h * 0.4);
+    ctx.rotate((Math.PI / 2) * (fall || 0) + (reduceMotion ? 0 : Math.sin(now / 45) * 0.3 * (shake || 0)));
+    ctx.beginPath(); ctx.moveTo(-h * 0.36, 0); ctx.lineTo(h * 0.36, 0); ctx.lineTo(h * 0.1, -h * 0.9); ctx.lineTo(-h * 0.1, -h * 0.9); ctx.closePath();
+    ctx.fillStyle = '#F08A24'; ctx.fill();
+    ctx.lineWidth = Math.max(1.5, h * 0.08); ctx.strokeStyle = '#16224A'; ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.fillRect(-h * 0.22, -h * 0.5, h * 0.44, h * 0.12);
+    ctx.restore();
+  }
+
+  function drawPins(now) {
+    const { C } = geo();
+    // 다음에 돌 핀·라바콘은 그 팀 색으로 빛나요
+    const glow = {};
+    TEAMS.forEach(t => {
+      const st = g.state[t.id];
+      if (!st || !st.active || st.finished || st.dq || g.phase !== 'race') return;
+      const n = pathOf(t, st.runner).apex.find(a => st.d < a.d);
+      if (n) glow[hazKey(n)] = glow[hazKey(n)] || hexA(t.color, 0.35);
+    });
+    TEAMS.forEach(t => {
+      const rp = ringPinOf(t);
+      drawOnePin(rp.x, rp.y, C * 0.05, t.color, fallen['pin:' + t.id] || 0, t.angle, glow['pin:' + t.id], now, wobble['pin:' + t.id] || 0);
+    });
+    TEAMS.forEach(t => {
+      // t 팀 핀 다음(달리는 방향)의 라바콘
+      const c = coneAt(t, 0), key = 'cone:' + t.id;
+      if (glow[key] && !reduceMotion) { ctx.beginPath(); ctx.arc(c.x, c.y, C * 0.03 * (1 + Math.sin(now / 150) * 0.08), 0, TAU); ctx.fillStyle = glow[key]; ctx.fill(); }
+      drawCone(c.x, c.y, C * 0.045, fallen[key], wobble[key], now);
+    });
+    TEAMS.forEach(t => {
+      const st = g.state[t.id];
+      if (!st || !st.active) return;
+      const p = pinOf(t);
+      const goal = g.phase === 'race' && !st.finished && !st.dq && st.zone === 'final';
+      drawOnePin(p.x, p.y, C * 0.07, t.color, st.pinFall, t.angle + Math.PI, goal ? hexA(t.color, 0.4) : null, now);
+    });
+  }
+
+  function drawTeams(now) {
+    const { C, c } = geo();
+    const size = C * 0.022;
+    const racing = g.phase === 'race';
+    TEAMS.forEach(t => {
+      const st = g.state[t.id];
+      if (!st || !st.active) return;
+      // 코너 밖에서 기다리는 주자들 (다음 주자는 코너에서 한 발은 팀 라인 위)
+      for (let i = st.runner + 1, k = 0; i < settings.runners; i++, k++) {
+        const q = waitSpot(t, k);
+        drawRunner(t, q.x, q.y, t.angle + Math.PI, size * (k === 0 ? 0.8 : 0.65), 0, { label: runnerNo(st, i), last: isLast(st, i) });
+      }
+      const p = posAt(t, st.runner, st.d);
+      drawRunner(t, p.x, p.y, p.dir, size, st.legPhase, {
+        moving: racing && st.v > 1 && !st.dq, speed: st.v / VMAX(), baton: true,
+        label: runnerNo(st), last: isLast(st), faded: st.dq,
+      });
+      if (racing && !st.dq && !st.finished && st.zone) {
+        const lim = st.zone === 'loop' ? LOOP_MAX : Court.FINISH_SAFE;
+        const fast = st.v / VMAX() > lim;
+        warnLabel(p.x + (c - p.x) * 0.18, p.y + (c - p.y) * 0.18, fast ? (st.zone === 'loop' ? '천천히!' : '살살!') : '좋아요', !fast);
+      }
+      if (st.dq) {
+        ctx.strokeStyle = '#E8403A'; ctx.lineWidth = Math.max(3, size * 0.25); ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(p.x - size, p.y - size); ctx.lineTo(p.x + size, p.y + size);
+        ctx.moveTo(p.x + size, p.y - size); ctx.lineTo(p.x - size, p.y + size);
+        ctx.stroke();
+      }
+    });
+  }
+
+  g.run();
+})();
+</script>
+<script>
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    addEventListener('load', () => navigator.serviceWorker.register('../sw.js', { scope: '../' }));
+  }
+</script>
+</body>
+</html>
