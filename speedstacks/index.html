@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>T&amp;T 스피드 스택스</title>
+<meta name="description" content="AWANA T&amp;T 스피드 스택스(2026 어와나 올림픽 규칙)를 옮긴 네 팀 게임: 가운데 삼각형에 컵 6개를 3층으로 쌓고 박수, 포개서 사각 박스에 전달해요">
+<meta name="theme-color" content="#16224A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AWANA 게임">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" type="image/png" href="../icons/favicon.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="preload" href="../fonts/jua.woff" as="font" type="font/woff" crossorigin>
+<link rel="stylesheet" href="../shared/court.css">
+<!-- 방문 통계 (GoatCounter: 쿠키·개인정보 없이 페이지별 방문 수만 셉니다) -->
+<script data-goatcounter="https://cjy1201.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</head>
+<body>
+
+<div id="stage">
+  <canvas id="court" aria-label="AWANA 게임 트랙"></canvas>
+
+  <button class="pad" data-team="red" aria-label="빨강 팀 버튼"><div class="pad-inner"><span class="pad-name">빨강</span><span class="pad-runners"></span><span class="pad-state">준비</span></div></button>
+  <button class="pad" data-team="blue" aria-label="파랑 팀 버튼"><div class="pad-inner"><span class="pad-name">파랑</span><span class="pad-runners"></span><span class="pad-state">준비</span></div></button>
+  <button class="pad" data-team="green" aria-label="초록 팀 버튼"><div class="pad-inner"><span class="pad-name">초록</span><span class="pad-runners"></span><span class="pad-state">준비</span></div></button>
+  <button class="pad" data-team="yellow" aria-label="노랑 팀 버튼"><div class="pad-inner"><span class="pad-name">노랑</span><span class="pad-runners"></span><span class="pad-state">준비</span></div></button>
+
+  <div id="tools">
+    <a class="tool" href="../" aria-label="게임 모음으로">← 게임 모음</a>
+    <button class="tool" id="helpBtn" type="button">게임 방법</button>
+    <button class="tool" id="soundBtn" type="button" aria-pressed="true">소리 켜짐</button>
+  </div>
+
+  <!-- 게임 방법 + 설정 -->
+  <div class="overlay" id="intro">
+    <div class="sheet">
+      <h1>T&amp;T<span class="stripe" aria-hidden="true"><b style="background:var(--red)"></b><b style="background:var(--blue)"></b><b style="background:var(--green)"></b><b style="background:var(--yellow)"></b></span>스피드 스택스</h1>
+      <p class="scoreline"><b>2개 조</b> (1조 No1~No5 · 2조 No6~No10) · 조마다 <b>1등 400점 · 2등 200점</b></p>
+
+      <div class="steps">
+        <div class="step">
+          <svg viewBox="0 0 96 96" aria-hidden="true">
+            <path d="M48 44 L22 70 H74 Z" fill="#1FA35A" opacity=".25" stroke="#1FA35A" stroke-width="3" stroke-linejoin="round"/>
+            <g fill="#F08A24" stroke="#16224A" stroke-width="2">
+              <path d="M33 68 h12 l-2 -10 h-8 z"/><path d="M45 68 h12 l-2 -10 h-8 z"/><path d="M57 68 h12 l-2 -10 h-8 z"/>
+              <path d="M39 58 h12 l-2 -10 h-8 z"/><path d="M51 58 h12 l-2 -10 h-8 z"/>
+              <path d="M45 48 h12 l-2 -10 h-8 z"/>
+            </g>
+            <text x="48" y="92" text-anchor="middle" font-family="Jua, sans-serif" font-size="12" fill="#16224A">3 · 2 · 1층</text>
+          </svg>
+          <strong>삼각형에 컵 6개 3층</strong>
+          <span>컵을 들고 가운데 우리 팀 삼각형으로.<br>한 개씩 톡! 흔들릴 땐 잠깐 기다려요</span>
+        </div>
+        <div class="step">
+          <svg viewBox="0 0 96 96" aria-hidden="true">
+            <circle cx="48" cy="48" r="30" fill="#F5C21B"/>
+            <text x="48" y="58" text-anchor="middle" font-family="Jua, sans-serif" font-size="26" fill="#16224A">짝!</text>
+          </svg>
+          <strong>박수 짝! 그리고 포개기</strong>
+          <span>다 쌓으면 박수 한 번,<br>다시 6개를 포개요</span>
+        </div>
+        <div class="step">
+          <svg viewBox="0 0 96 96" aria-hidden="true">
+            <rect x="30" y="54" width="36" height="30" fill="#fff" stroke="#16224A" stroke-width="3"/>
+            <g fill="#F08A24" stroke="#16224A" stroke-width="2"><path d="M40 76 h16 l-3 -18 h-10 z"/></g>
+            <path d="M18 30 Q40 20 44 50" fill="none" stroke="#16224A" stroke-width="2.5" stroke-dasharray="4 4"/>
+          </svg>
+          <strong>사각 박스에 세워 전달</strong>
+          <span>포갠 컵을 서클 안 사각 박스 위에 세워 놓으면<br>다음 선수가 가져가요 (손에서 손은 실격)</span>
+        </div>
+        <div class="step">
+          <svg viewBox="0 0 96 96" aria-hidden="true">
+            <path d="M14 26 A60 60 0 0 1 60 14" fill="none" stroke="#F5C21B" stroke-width="4" stroke-dasharray="5 5"/>
+            <path d="M60 14 Q84 20 70 40 L52 62" fill="none" stroke="#F5C21B" stroke-width="4" stroke-dasharray="5 5"/>
+            <rect x="34" y="60" width="28" height="28" fill="#fff" stroke="#16224A" stroke-width="2.5"/>
+            <g transform="translate(46 80)"><path d="M0 -12 m-3.5 0 a3.5 3.5 0 1 0 7 0 a3.5 3.5 0 1 0 -7 0 M-2 -8 h4 l2 7 q2 5 0 9 h-8 q-2 -4 0 -9 z" fill="#fff" stroke="#16224A" stroke-width="2" stroke-linejoin="round"/></g>
+          </svg>
+          <strong>마지막 선수는 핀 돌아 종료</strong>
+          <span>포갠 컵을 든 채 우리 팀 색깔 핀을 돌아<br>컵을 들지 않은 손으로 종료 핀 “살살”</span>
+        </div>
+      </div>
+
+      <div class="foul">
+        <b>이러면 실격!</b>
+        <ul>
+          <li>컵이 대각선이나 삼각형 선을 넘어 상대 팀 쪽으로 가면 (와르르 무너질 때 그럴 수 있어요)</li>
+          <li>선수 교대 때 손에서 손으로 컵을 건네면 · 컵 6개가 사각 박스 위에 포개져 있을 때만 교대</li>
+          <li>컵이 사각 박스 선에 닿거나 똑바로 서지 않은 채 전달하면 (다음 선수에게 가기 전에 고치면 괜찮아요)</li>
+          <li>종료 핀을 슬라이딩으로 넘어뜨리면 · 첫 선수는 서클 라인 밖에서 출발해요</li>
+        </ul>
+      </div>
+
+      <div class="settings">
+        <div class="row" role="group" aria-label="참가 팀">
+          <span class="lbl">참가 팀</span>
+          <button class="chip" type="button" data-pick="red" aria-pressed="true" style="--c:var(--red)">빨강</button>
+          <button class="chip" type="button" data-pick="blue" aria-pressed="true" style="--c:var(--blue)">파랑</button>
+          <button class="chip" type="button" data-pick="green" aria-pressed="true" style="--c:var(--green)">초록</button>
+          <button class="chip" type="button" data-pick="yellow" aria-pressed="true" style="--c:var(--yellow);--t:#16224A">노랑</button>
+        </div>
+        <div class="row" role="group" aria-label="조 편성">
+          <span class="lbl">경기</span>
+          <button class="chip" type="button" data-heats="2" aria-pressed="true">2개 조 (정식)</button>
+          <button class="chip" type="button" data-heats="1" aria-pressed="false">1개 조</button>
+        </div>
+        <div class="row" role="group" aria-label="한 조 선수">
+          <span class="lbl">한 조</span>
+          <button class="chip" type="button" data-crew="5" aria-pressed="true">5명 (규칙서)</button>
+          <button class="chip" type="button" data-crew="6" aria-pressed="false">코치 + 5명 (영상)</button>
+        </div>
+        <div class="row" role="group" aria-label="쌓기 난이도">
+          <span class="lbl">쌓기</span>
+          <button class="chip" type="button" data-stack="0" aria-pressed="false">쉬움</button>
+          <button class="chip" type="button" data-stack="1" aria-pressed="true">보통</button>
+          <button class="chip" type="button" data-stack="2" aria-pressed="false">어려움</button>
+        </div>
+      </div>
+
+      <button class="go" id="startBtn" type="button">시작하기</button>
+      <p class="keys">달릴 땐 톡톡 · 컵은 한 개씩 톡 (흔들릴 땐 기다리기) · 짝! · 포개기! · 박스 앞과 종료 핀 앞에서는 살살 · 키보드 연습: 빨강 Q · 파랑 P · 초록 M · 노랑 Z</p>
+    </div>
+  </div>
+
+  <!-- 결과 -->
+  <div class="overlay" id="result" hidden>
+    <div class="sheet">
+      <h2 id="resultTitle">경기 결과</h2>
+      <div class="podium" id="podium"></div>
+      <div class="buttons">
+        <button class="go" id="nextBtn" type="button">다음</button>
+        <button class="go ghost" id="menuBtn" type="button">설정 바꾸기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../shared/court.js"></script>
+<script>
+(() => {
+  const { TAU, TEAMS, ZC, hexA, reduceMotion, font } = Court;
+
+  const DECAY = 1.6;
+  const VMAX = () => g.geo().C * 0.42;     // 최고 속도 (px/초)
+  const WALK = 0.3;                        // 박스 앞 · 종료 핀 앞에서는 손을 떼도 걸어서 가요
+  // 컵 쌓기: 3 · 2 · 1층 = 컵 6개. 2층부터는 컵을 올리면 SETTLE 초 동안 흔들려요. 그 사이 다음 컵을 올리면 무너질 수 있어요.
+  const CUPS = 6;
+  const SETTLE = 0.3;
+  const TOPPLE = [0.2, 0.35, 0.55];        // 쉬움 · 보통 · 어려움 (바로 올렸을 때 무너질 확률)
+  const TOPPLE_TIME = 1.0;                 // 무너진 컵을 다시 모으는 시간(초)
+  const SPILL = [0.02, 0.05, 0.1];         // 무너질 때 컵이 선을 넘어 상대 팀 쪽으로 갈 확률 (실격)
+  const PLACE_SAFE = 0.55;                 // 박스에 이보다 빠르게 놓으면 컵이 기울 수 있어요
+  const FIX_CHANCE = 0.6;                  // 최고 속도로 놓을 때 기울 확률 (고치면 실격 아님)
+  const FIX_TIME = 0.8;
+
+  const settings = { teams: new Set(['red', 'blue', 'green', 'yellow']), heats: 2, crew: 5, stack: 1 };
+  // 한 조 선수: 5명(규칙서) 또는 코치 + 5명(영상). 코치가 첫 선수예요.
+  function crew() {
+    const base = (g.match.heat - 1) * 5;
+    const nos = [1, 2, 3, 4, 5].map(i => 'No' + (base + i));
+    return settings.crew === 6 ? ['코치', ...nos] : nos;
+  }
+
+  const g = Court.create({
+    settings, chips: ['heats', 'crew', 'stack'],
+    heatName: '조', goText: '출발!', idleText: '쌓기 → 짝! → 포개기', nextReady: '출발 준비',
+    heatTitle: h => ` (${settings.crew === 6 ? '코치 + ' : ''}No${(h - 1) * 5 + 1}~No${h * 5})`,
+    resultSub: (t, h) => `${h.time.toFixed(1)}초 · 무너짐 ${g.state[t.id].topples}번`,
+    teamState: () => ({
+      runner: 0,
+      mode: 'go',                // go 컵 가지러·쌓으러 · stack 쌓기 · topple 무너짐 · back 박스로 · fix 고치기 · final 종료 핀으로
+      d: 0, v: 0, legPhase: 0, zone: null, moved: false,
+      cups: 'hand',              // hand 손에 · box 사각 박스 위 · stack 삼각형에 쌓는 중
+      pause: 0,                  // 박스에서 컵 집는 중
+      step: 0,                   // 0~6 컵 올리기 · 6 짝! 차례 · 7 포개기 차례
+      placedAt: -9, toppleT: 0, clapT: 0, fixT: 0,
+      topples: 0,
+    }),
+    onReset: () => { pathCache = { key: '', paths: {} }; },
+    padText, padDots, tap, race, draw,
+    progress: (st, t) => st.runner * 20 + ({ go: 0, stack: 5, topple: 5, back: 14, fix: 16, final: 14 }[st.mode] || 0) + st.step + (st.mode === 'go' || st.mode === 'back' || st.mode === 'final' ? st.d / (curPath(t, st).L || 1) * 4 : 0),
+  });
+  const { ctx, sfx, tone, geo, at, pinOf, ringPinOf, boxR, BOX_H, say, updatePads, refreshPad, burst,
+          drawOnePin, drawRunner, warnLabel } = g;
+  sfx.cup = n => tone(n * 1.2, 0.05, 'square', 0.05);
+  sfx.clap = () => { tone(1800, 0.03, 'square', 0.06); tone(900, 0.05, 'triangle', 0.05, 0.01); };
+  sfx.nest = () => [784, 988].forEach((f, i) => tone(f, 0.07, 'triangle', 0.07, i * 0.05));
+  sfx.crash = () => [400, 300, 220, 160].forEach((f, i) => tone(f, 0.08, 'square', 0.06, i * 0.06));
+
+  const n = () => crew().length;
+  const isLast = st => st.runner === n() - 1;
+  const settling = st => st.step >= 3 && st.step < CUPS && performance.now() / 1000 - st.placedAt < SETTLE;
+
+  // ---------- 자리 ----------
+  const sideA = t => t.angle + ZC;
+  const triSpot = t => at(sideA(t), geo().box * 0.55);                 // 가운데 우리 팀 삼각형 (컵 쌓는 곳)
+  const standSpot = t => at(sideA(t), geo().box * 1.3);                // 쌓는 선수가 서는 곳 (삼각형 바로 앞)
+  const boxSpot = t => at(sideA(t), boxR());                            // ⑤ 사각 박스 (서클 라인 안쪽)
+  // 기다리는 줄: 서클 라인 바깥, 가운데를 봤을 때 1번이 왼쪽
+  function lineSpot(t, i) {
+    const { R, band } = geo();
+    return at(sideA(t) + ((n() - 1) / 2 - i) * 0.1, R + band * 0.62);
+  }
+
+  // 달리는 길
+  let pathCache = { key: '', paths: {} };
+  function polyPath(pts) {
+    const len = [0];
+    for (let i = 1; i < pts.length; i++) len.push(len[i - 1] + Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y));
+    return { pts, len, L: len[len.length - 1] };
+  }
+  function straight(a, b, k = 12) {
+    const pts = [];
+    for (let i = 0; i <= k; i++) pts.push({ x: a.x + (b.x - a.x) * i / k, y: a.y + (b.y - a.y) * i / k });
+    return pts;
+  }
+  // go: 줄 → (박스에서 컵 집기) → 삼각형 · back: 삼각형 → 박스 · final: 삼각형 → 우리 팀 핀 바깥으로 돌아 → 종료 핀
+  function pathOf(t, kind, runner) {
+    const key = g.S + ':' + n();
+    if (pathCache.key !== key) pathCache = { key, paths: {} };
+    const id = t.id + kind + runner;
+    if (pathCache.paths[id]) return pathCache.paths[id];
+    const { C, R } = geo();
+    let p;
+    if (kind === 'go') {
+      const a = lineSpot(t, runner), b = boxSpot(t), c = standSpot(t);
+      const pts = runner === 0 ? straight(a, c, 20) : [...straight(a, b, 8), ...straight(b, c, 14).slice(1)];
+      p = polyPath(pts);
+      p.pickD = runner === 0 ? -1 : Math.hypot(b.x - a.x, b.y - a.y);
+    } else if (kind === 'back') p = polyPath(straight(standSpot(t), boxSpot(t), 14));
+    else {
+      const A = t.angle;
+      const way = [standSpot(t), at(A + 0.3, R * 0.55), at(A + 0.14, R * 0.97), at(A + 0.07, R * 1.16),
+                   at(A - 0.07, R * 1.16), at(A - 0.14, R * 0.95), at(A - 0.1, R * 0.6), at(A, C * 0.11)];
+      const pts = [way[0]];
+      for (let s = 0; s < way.length - 1; s++) {
+        const p0 = way[Math.max(0, s - 1)], p1 = way[s], p2 = way[s + 1], p3 = way[Math.min(way.length - 1, s + 2)];
+        for (let i = 1; i <= 10; i++) {
+          const u = i / 10, u2 = u * u, u3 = u2 * u;
+          const cr = k => 0.5 * (2 * p1[k] + (-p0[k] + p2[k]) * u + (2 * p0[k] - 5 * p1[k] + 4 * p2[k] - p3[k]) * u2 + (-p0[k] + 3 * p1[k] - 3 * p2[k] + p3[k]) * u3);
+          pts.push({ x: cr('x'), y: cr('y') });
+        }
+      }
+      p = polyPath(pts);
+    }
+    return (pathCache.paths[id] = p);
+  }
+  const curPath = (t, st) => pathOf(t, st.mode === 'go' ? 'go' : st.mode === 'final' ? 'final' : 'back', st.runner);
+  function posOn(path, d) {
+    const { pts, len, L } = path;
+    d = Math.max(0, Math.min(d, L));
+    let lo = 1, hi = len.length - 1;
+    while (lo < hi) { const m = (lo + hi) >> 1; if (len[m] < d) lo = m + 1; else hi = m; }
+    const i = lo, a = pts[i - 1], b = pts[i];
+    const f = (d - len[i - 1]) / ((len[i] - len[i - 1]) || 1);
+    return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f, dir: Math.atan2(b.y - a.y, b.x - a.x) };
+  }
+  // 살살 구간: 최고 속도에서 경고를 보고 손을 떼도 닿기 전에 안전 속도까지 느려지는 거리
+  const PRE_PLACE = () => VMAX() * (1 - PLACE_SAFE) / DECAY * 1.15;
+  const PRE_FINAL = () => VMAX() * (1 - Court.FINISH_SAFE) / DECAY * 1.15;
+
+  // ---------- 버튼 ----------
+  function padText(st) {
+    if (st.mode === 'topple') return '와르르!';
+    if (st.mode === 'fix') return '컵 고치기…';
+    if (st.pause > 0) return '컵 집기!';
+    if (st.mode === 'stack') {
+      if (st.step < CUPS) return settling(st) ? '흔들흔들…' : `쌓기 ${st.step + 1}/6`;
+      return st.step === CUPS ? '짝!' : '포개기!';
+    }
+    if (st.zone) return '살살!';
+    return '톡톡!';
+  }
+  function padDots(st) {
+    const dots = [];
+    for (let i = 0; i < n(); i++) dots.push(i < st.runner || st.finished ? 'done' : (i === st.runner && g.phase === 'race' ? 'now' : ''));
+    return dots;
+  }
+
+  function tap(t, st, el) {
+    if (st.mode === 'topple' || st.mode === 'fix' || st.pause > 0) return;
+    if (!g.tapGap(st)) return;
+    if (st.mode !== 'stack') {
+      st.v = Math.min(VMAX(), st.v + VMAX() * 0.2);
+      st.moved = true;
+      sfx.tap(t.note);
+      return;
+    }
+    // 컵 쌓기: 1층(3개)은 바닥이라 괜찮고, 2층부터는 흔들리는 중에 올리면 무너질 수 있어요
+    const now = performance.now() / 1000;
+    if (st.step < CUPS) {
+      if (settling(st)) {
+        const early = 1 - (now - st.placedAt) / SETTLE;
+        if (Math.random() < TOPPLE[settings.stack] * (0.4 + 0.6 * early)) { topple(t, st); return; }
+        g.shakePad(el);
+      }
+      st.step++; st.placedAt = now;
+      sfx.cup(t.note);
+      if (st.step === CUPS) say(`${t.name} 3층 완성! 짝!`, t.color, 0.9);
+    } else if (st.step === CUPS) {                               // 짝! (박수 없이는 포갤 수 없어요)
+      st.step = CUPS + 1; st.clapT = now;
+      sfx.clap();
+      const p = triSpot(t);
+      burst(p.x, p.y, '#F5C21B', 10);
+    } else {                                                     // 포개서 출발
+      st.step = 0; st.cups = 'hand'; st.d = 0; st.v = 0; st.zone = null; st.moved = false;
+      st.mode = isLast(st) ? 'final' : 'back';
+      sfx.nest();
+      say(isLast(st) ? `${t.name} 포갰어요! 컵 들고 색깔 핀 돌아 종료 핀으로` : `${t.name} 포갰어요! 사각 박스로`, t.color, 1.2);
+    }
+    updatePads();
+  }
+
+  function disqualify(t, reason) {
+    const st = g.state[t.id];
+    st.dq = true; st.dqReason = reason; st.v = 0;
+    const p = runnerPos(t, st);
+    burst(p.x, p.y, '#16224A', 24);
+    sfx.foul();
+    say(`${t.name} 실격! ${reason}`, t.color, 2.6);
+    updatePads();
+  }
+
+  function topple(t, st) {
+    st.mode = 'topple'; st.toppleT = TOPPLE_TIME; st.step = 0; st.topples++;
+    sfx.crash();
+    if (Math.random() < SPILL[settings.stack]) { disqualify(t, '컵이 삼각형 선을 넘어 상대 팀 쪽으로 감'); return; }
+    say(`${t.name} 와르르! 다시 쌓아요`, t.color, 1.2);
+    updatePads();
+  }
+
+  // ---------- 진행 ----------
+  function race(dt) {
+    for (const t of TEAMS) {
+      const st = g.state[t.id];
+      if (!st.active || st.finished || st.dq) continue;
+
+      if (st.mode === 'topple') {
+        st.toppleT -= dt;
+        if (st.toppleT <= 0) { st.mode = 'stack'; st.placedAt = -9; updatePads(); }
+        continue;
+      }
+      if (st.mode === 'fix') {
+        st.fixT -= dt;
+        if (st.fixT <= 0) handOver(t, st);
+        continue;
+      }
+      if (st.mode === 'stack') { refreshPad(t); continue; }
+      if (st.pause > 0) {
+        st.pause -= dt;
+        if (st.pause <= 0) { st.pause = 0; updatePads(); }
+        continue;
+      }
+
+      const path = curPath(t, st);
+      st.v *= Math.exp(-DECAY * dt);
+      if (st.moved && st.zone && st.v < VMAX() * WALK) st.v = VMAX() * WALK;   // 손을 떼도 걸어서는 가요 (출발 전엔 가만히)
+      const before = st.d;
+      st.d += st.v * dt;
+      st.legPhase += st.v * dt * 0.14;
+
+      if (st.mode === 'go') {
+        // 박스 위의 포갠 컵 집기 (손에서 손으로 받지 않아요)
+        if (path.pickD > 0 && before < path.pickD && st.d >= path.pickD) {
+          st.d = path.pickD; st.cups = 'hand'; st.pause = 0.25; st.v *= 0.5;
+          sfx.ok(); updatePads();
+          continue;
+        }
+        if (st.d >= path.L) {
+          st.d = path.L; st.v = 0; st.mode = 'stack'; st.cups = 'stack'; st.step = 0; st.placedAt = -9;
+          updatePads();
+          continue;
+        }
+      } else if (st.mode === 'back') {
+        if (st.d >= path.L) {
+          st.d = path.L;
+          // 너무 빨리 놓으면 컵이 기울거나 박스 선에 닿아요 → 다음 선수에게 가기 전에 고치면 괜찮아요
+          const sp = st.v / VMAX();
+          st.cups = 'box'; st.v = 0;
+          if (sp > PLACE_SAFE && Math.random() < FIX_CHANCE * Math.min(1, (sp - PLACE_SAFE) / (1 - PLACE_SAFE))) {
+            st.mode = 'fix'; st.fixT = FIX_TIME;
+            sfx.drop();
+            say(`${t.name} 컵이 기울었어요! 고치고 전달`, t.color, 1.2);
+            updatePads();
+            continue;
+          }
+          handOver(t, st);
+          continue;
+        }
+      } else if (st.mode === 'final') {
+        if (st.d >= path.L) {
+          st.d = path.L;
+          if (g.slideFoul(st.v / VMAX())) { st.pinFall = 0.001; disqualify(t, '슬라이딩으로 종료 핀을 넘어뜨림'); }
+          else g.knockPin(t);
+          continue;
+        }
+      }
+      const pre = st.mode === 'back' ? PRE_PLACE() : st.mode === 'final' ? PRE_FINAL() : -1;
+      const z = st.moved && pre > 0 && st.d >= path.L - pre ? 'slow' : null;   // 처음 톡 하기 전엔 '톡톡!'
+      if (z !== st.zone) { st.zone = z; updatePads(); }
+      refreshPad(t);
+    }
+  }
+
+  // 박스 위에 컵을 세웠어요 → 다음 선수 출발
+  function handOver(t, st) {
+    st.runner++; st.mode = 'go'; st.d = 0; st.v = 0; st.zone = null; st.moved = false;
+    sfx.pass();
+    say(`${t.name} 컵 전달! ${crew()[st.runner]} 출발`, t.color, 1.2);
+    updatePads();
+  }
+
+  // ---------- 그리기 ----------
+  function draw(now) {
+    g.drawCourt({});
+    drawTriangles();
+    drawPins(now);
+    drawTeams(now);
+  }
+
+  function drawTriangles() {
+    const { c, box } = geo();
+    TEAMS.forEach(t => {
+      const st = g.state[t.id];
+      if (!st || !st.active) return;
+      const a = at(t.angle, box * Math.SQRT2), b = at(t.angle + Math.PI / 2, box * Math.SQRT2);
+      ctx.beginPath(); ctx.moveTo(c, c); ctx.lineTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.closePath();
+      ctx.fillStyle = hexA(t.color, 0.2); ctx.fill();
+    });
+  }
+
+  function drawPins(now) {
+    const { C } = geo();
+    TEAMS.forEach(t => {
+      const rp = ringPinOf(t);
+      const st = g.state[t.id];
+      const glow = st && st.active && g.phase === 'race' && st.mode === 'final' && !st.zone && !st.dq ? hexA(t.color, 0.35) : null;
+      drawOnePin(rp.x, rp.y, C * 0.05, t.color, 0, t.angle, glow, now);
+    });
+    TEAMS.forEach(t => {
+      const st = g.state[t.id];
+      if (!st || !st.active) return;
+      const p = pinOf(t);
+      const goal = g.phase === 'race' && !st.finished && !st.dq && st.mode === 'final' && st.zone;
+      drawOnePin(p.x, p.y, C * 0.06, t.color, st.pinFall, t.angle + Math.PI, goal ? hexA(t.color, 0.4) : null, now);
+    });
+  }
+
+  // 스택스 컵 하나 (위가 좁은 사다리꼴)
+  function cup(x, y, w, tilt = 0) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(tilt);
+    ctx.beginPath();
+    ctx.moveTo(-w * 0.5, w * 0.45); ctx.lineTo(w * 0.5, w * 0.45);
+    ctx.lineTo(w * 0.34, -w * 0.45); ctx.lineTo(-w * 0.34, -w * 0.45); ctx.closePath();
+    ctx.fillStyle = '#F08A24'; ctx.fill();
+    ctx.strokeStyle = '#16224A'; ctx.lineWidth = Math.max(1.2, w * 0.1); ctx.stroke();
+    ctx.restore();
+  }
+  // 포갠 컵
+  function nested(x, y, w, tilt = 0) {
+    cup(x, y, w, tilt);
+    ctx.save(); ctx.translate(x, y); ctx.rotate(tilt);
+    ctx.strokeStyle = '#16224A'; ctx.lineWidth = Math.max(1, w * 0.07);
+    [-0.2, 0, 0.2].forEach(k => { ctx.beginPath(); ctx.moveTo(-w * 0.44, w * k); ctx.lineTo(w * 0.44, w * k); ctx.stroke(); });
+    ctx.restore();
+  }
+  // 3 · 2 · 1층 피라미드 (쌓은 개수만큼)
+  function pyramid(x, y, w, count, shake) {
+    const rows = [[-1, 0, 1], [-0.5, 0.5], [0]];
+    let k = 0;
+    rows.forEach((row, r) => row.forEach(dx => {
+      if (k++ >= count) return;
+      cup(x + dx * w * 1.02, y - r * w * 0.9, w, r > 0 ? shake * (r + 0.5) : 0);
+    }));
+  }
+
+  function runnerPos(t, st) {
+    if (st.mode === 'stack' || st.mode === 'topple') return { ...standSpot(t), dir: sideA(t) + Math.PI };
+    if (st.mode === 'fix') return { ...boxSpot(t), dir: sideA(t) };
+    return posOn(curPath(t, st), st.d);
+  }
+
+  function drawTeams(now) {
+    const { C, c } = geo();
+    const size = C * 0.021, w = C * 0.022;
+    const racing = g.phase === 'race';
+    TEAMS.forEach(t => {
+      const st = g.state[t.id];
+      if (!st || !st.active) return;
+      const names = crew();
+
+      // 기다리는 줄 (이미 뛴 선수는 흐리게)
+      for (let i = 0; i < names.length; i++) {
+        if (i === st.runner && !st.finished) continue;
+        const q = lineSpot(t, i);
+        drawRunner(t, q.x, q.y, sideA(t) + Math.PI, size * 0.8, 0, { label: names[i] === '코치' ? '코' : names[i].slice(2), faded: i < st.runner || st.finished });
+      }
+
+      // 삼각형 안의 컵
+      const tp = triSpot(t);
+      if (st.mode === 'stack') {
+        const shake = settling(st) && !reduceMotion ? Math.sin(now / 30) * 0.1 : 0;
+        pyramid(tp.x, tp.y + w * 0.9, w, Math.min(CUPS, st.step), shake);
+        if (st.step === CUPS + 1 && performance.now() / 1000 - st.clapT < 0.5) warnLabel(tp.x, tp.y - w * 2.4, '짝!', true);
+      } else if (st.mode === 'topple') {
+        const u = 1 - st.toppleT / TOPPLE_TIME;
+        [-1.5, -0.5, 0.5, 1.5].forEach((d, i) => cup(tp.x + d * w * (0.8 + u), tp.y + w * 0.6 + (i % 2) * 3, w, d * 1.2 + u * 2));
+      }
+      // 박스 위의 컵
+      const bp = boxSpot(t);
+      if (st.cups === 'box') nested(bp.x, bp.y, w * 0.9, st.mode === 'fix' ? 0.5 : 0);
+
+      // 뛰는 선수
+      const p = runnerPos(t, st);
+      const moving = racing && (st.mode === 'go' || st.mode === 'back' || st.mode === 'final') && st.v > 1 && !st.dq;
+      const label = names[st.runner] === '코치' ? '코' : (names[st.runner] || '').slice(2);
+      drawRunner(t, p.x, p.y, p.dir, size, st.legPhase, { moving, speed: st.v / VMAX(), label, last: isLast(st), faded: st.dq });
+      if (st.cups === 'hand' && !st.dq) nested(p.x + Math.cos(p.dir) * size * 1.2, p.y + Math.sin(p.dir) * size * 1.2, w * 0.8);
+
+      if (racing && !st.finished && !st.dq) {
+        const lx = p.x + (c - p.x) * 0.2, ly = p.y + (c - p.y) * 0.2;
+        if (st.mode === 'stack') {
+          const q = at(sideA(t), geo().box * 2.3);
+          if (st.step < CUPS) warnLabel(q.x, q.y, settling(st) ? '흔들흔들' : '쌓기!', !settling(st));
+          else warnLabel(q.x, q.y, st.step === CUPS ? '짝!' : '포개기!', true);
+        } else if (st.mode === 'fix') warnLabel(lx, ly, '고치기', false);
+        else if (st.zone) {
+          const fast = st.v / VMAX() > (st.mode === 'back' ? PLACE_SAFE : Court.FINISH_SAFE);
+          warnLabel(lx, ly, fast ? '살살!' : '좋아요', !fast);
+        }
+      }
+      if (st.dq) {
+        ctx.strokeStyle = '#E8403A'; ctx.lineWidth = Math.max(3, size * 0.25); ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(p.x - size, p.y - size); ctx.lineTo(p.x + size, p.y + size);
+        ctx.moveTo(p.x + size, p.y - size); ctx.lineTo(p.x - size, p.y + size);
+        ctx.stroke();
+      }
+    });
+  }
+
+  g.run();
+})();
+</script>
+<script>
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    addEventListener('load', () => navigator.serviceWorker.register('../sw.js', { scope: '../' }));
+  }
+</script>
+</body>
+</html>
