@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>T&amp;T 사방 줄다리기</title>
+<meta name="description" content="AWANA T&amp;T 사방 줄다리기(2026 어와나 올림픽 규칙)를 옮긴 네 팀 게임: 사방 줄을 당겨 우리 팀 콩주머니를 먼저 잡아요">
+<meta name="theme-color" content="#16224A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AWANA 게임">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" type="image/png" href="../icons/favicon.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="preload" href="../fonts/jua.woff" as="font" type="font/woff" crossorigin>
+<link rel="stylesheet" href="../shared/court.css">
+<!-- 방문 통계 (GoatCounter: 쿠키·개인정보 없이 페이지별 방문 수만 셉니다) -->
+<script data-goatcounter="https://cjy1201.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</head>
+<body>
+
+<div id="stage">
+  <canvas id="court" aria-label="AWANA 게임 트랙"></canvas>
+
+  <button class="pad" data-team="red" aria-label="빨강 팀 버튼"><div class="pad-inner"><span class="pad-name">빨강</span><span class="pad-runners"></span><span class="pad-state">준비</span></div></button>
+  <button class="pad" data-team="blue" aria-label="파랑 팀 버튼"><div class="pad-inner"><span class="pad-name">파랑</span><span class="pad-runners"></span><span class="pad-state">준비</span></div></button>
+  <button class="pad" data-team="green" aria-label="초록 팀 버튼"><div class="pad-inner"><span class="pad-name">초록</span><span class="pad-runners"></span><span class="pad-state">준비</span></div></button>
+  <button class="pad" data-team="yellow" aria-label="노랑 팀 버튼"><div class="pad-inner"><span class="pad-name">노랑</span><span class="pad-runners"></span><span class="pad-state">준비</span></div></button>
+
+  <div id="tools">
+    <a class="tool" href="../" aria-label="게임 모음으로">← 게임 모음</a>
+    <button class="tool" id="helpBtn" type="button">게임 방법</button>
+    <button class="tool" id="soundBtn" type="button" aria-pressed="true">소리 켜짐</button>
+  </div>
+
+  <!-- 게임 방법 + 설정 -->
+  <div class="overlay" id="intro">
+    <div class="sheet">
+      <h1>T&amp;T<span class="stripe" aria-hidden="true"><b style="background:var(--red)"></b><b style="background:var(--blue)"></b><b style="background:var(--green)"></b><b style="background:var(--yellow)"></b></span>사방 줄다리기</h1>
+      <p class="scoreline"><b>3개 조</b> 2명씩 (1조 No1·3 · 2조 No5·8 · 3조 No9·10) · 조마다 <b>1등 100점</b> · 콩주머니를 먼저 잡은 팀이 이겨요</p>
+
+      <div class="steps">
+        <div class="step">
+          <svg viewBox="0 0 96 96" aria-hidden="true">
+            <path d="M30 30 Q48 40 66 30 Q56 48 66 66 Q48 56 30 66 Q40 48 30 30 Z" fill="none" stroke="#B98A4B" stroke-width="5" stroke-linejoin="round"/>
+            <circle cx="22" cy="22" r="8" fill="#E8403A" stroke="#fff" stroke-width="2.5"/><circle cx="74" cy="22" r="8" fill="#2F6FE4" stroke="#fff" stroke-width="2.5"/>
+            <circle cx="74" cy="74" r="8" fill="#1FA35A" stroke="#fff" stroke-width="2.5"/><circle cx="22" cy="74" r="8" fill="#F5C21B" stroke="#fff" stroke-width="2.5"/>
+          </svg>
+          <strong>톡톡! 우리 쪽으로 당기기</strong>
+          <span>빠르게 누를수록 세게 당겨요.<br>우리 팀 대각선 쪽으로 줄이 끌려와요</span>
+        </div>
+        <div class="step">
+          <svg viewBox="0 0 96 96" aria-hidden="true">
+            <path d="M14 82 L82 14" stroke="#1FA35A" stroke-width="3"/>
+            <path d="M22 66 l8 8 M32 56 l8 8 M42 46 l8 8" stroke="#1FA35A" stroke-width="3"/>
+            <rect x="24" y="60" width="16" height="11" rx="3" fill="#1FA35A" stroke="#16224A" stroke-width="2"/>
+            <path d="M60 44 l-12 12" stroke="#16224A" stroke-width="3" stroke-linecap="round"/>
+            <path d="M48 56 l2 -8 M48 56 l8 -2" stroke="#16224A" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+          <strong>호루라기마다 한 칸씩</strong>
+          <span>콩주머니는 서클 라인에서 3번째 칸.<br>15초마다 한 칸씩 가운데로 와요</span>
+        </div>
+        <div class="step">
+          <svg viewBox="0 0 96 96" aria-hidden="true">
+            <circle cx="48" cy="48" r="30" fill="#1FA35A"/>
+            <text x="48" y="44" text-anchor="middle" font-family="Jua, sans-serif" font-size="16" fill="#fff">꾹</text>
+            <text x="48" y="62" text-anchor="middle" font-family="Jua, sans-serif" font-size="16" fill="#fff">잡기!</text>
+          </svg>
+          <strong>닿으면 꾹 잡기!</strong>
+          <span>손이 닿으면 버튼을 꾹 누르고 있어요.<br>잡는 동안 끌려가면 놓쳐요</span>
+        </div>
+        <div class="step">
+          <svg viewBox="0 0 96 96" aria-hidden="true">
+            <path d="M20 40 Q48 30 76 40" fill="none" stroke="#B98A4B" stroke-width="5"/>
+            <circle cx="40" cy="58" r="10" fill="#1FA35A" stroke="#fff" stroke-width="3"/>
+            <path d="M40 48 L40 38 M44 62 L60 76" stroke="#16224A" stroke-width="3" stroke-linecap="round"/>
+            <rect x="56" y="72" width="16" height="11" rx="3" fill="#1FA35A" stroke="#16224A" stroke-width="2"/>
+          </svg>
+          <strong>한 손은 줄 위에</strong>
+          <span>한 손은 줄을 잡은 채 다른 손으로 잡아요.<br>줄을 놓친 채 잡으면 콩주머니는 원래 자리로</span>
+        </div>
+      </div>
+
+      <div class="foul">
+        <b>규칙</b>
+        <ul>
+          <li>줄은 표시 부분 양쪽을 잡고, 표시가 우리 팀 대각선과 맞게 서요</li>
+          <li>발로 콩주머니를 끌어와도 되지만 손으로 잡아야 이겨요</li>
+          <li>경기 중 잠깐 줄을 놓쳐도 계속해요 · 줄을 놓친 상태로 콩주머니를 잡으면 선심이 원래 자리로 돌려놓아요</li>
+          <li>콩주머니를 손으로 잡은 팀이 나오면 경기가 멈춰요</li>
+        </ul>
+      </div>
+
+      <div class="settings">
+        <div class="row" role="group" aria-label="참가 팀">
+          <span class="lbl">참가 팀</span>
+          <button class="chip" type="button" data-pick="red" aria-pressed="true" style="--c:var(--red)">빨강</button>
+          <button class="chip" type="button" data-pick="blue" aria-pressed="true" style="--c:var(--blue)">파랑</button>
+          <button class="chip" type="button" data-pick="green" aria-pressed="true" style="--c:var(--green)">초록</button>
+          <button class="chip" type="button" data-pick="yellow" aria-pressed="true" style="--c:var(--yellow);--t:#16224A">노랑</button>
+        </div>
+        <div class="row" role="group" aria-label="조 편성">
+          <span class="lbl">경기</span>
+          <button class="chip" type="button" data-heats="3" aria-pressed="true">3개 조 (정식)</button>
+          <button class="chip" type="button" data-heats="1" aria-pressed="false">1개 조</button>
+        </div>
+        <div class="row" role="group" aria-label="호루라기 간격">
+          <span class="lbl">호루라기</span>
+          <button class="chip" type="button" data-whistle="15" aria-pressed="true">15초 (규칙서)</button>
+          <button class="chip" type="button" data-whistle="20" aria-pressed="false">20초 (영상)</button>
+        </div>
+      </div>
+
+      <button class="go" id="startBtn" type="button">시작하기</button>
+      <p class="keys">톡톡 빠르게 당기기 · 손이 닿으면 꾹 눌러 잡기 · 키보드 연습: 빨강 Q · 파랑 P · 초록 M · 노랑 Z (잡을 땐 키를 누르고 있기)</p>
+    </div>
+  </div>
+
+  <!-- 결과 -->
+  <div class="overlay" id="result" hidden>
+    <div class="sheet">
+      <h2 id="resultTitle">경기 결과</h2>
+      <div class="podium" id="podium"></div>
+      <div class="buttons">
+        <button class="go" id="nextBtn" type="button">다음</button>
+        <button class="go ghost" id="menuBtn" type="button">설정 바꾸기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../shared/court.js"></script>
+<script>
+(() => {
+  const { TAU, TEAMS, hexA, reduceMotion, font } = Court;
+
+  // 줄 당기기: 누를 때마다 당기는 힘이 쌓였다가 줄어들어요. 네 팀 힘을 합친 쪽으로 줄 가운데가 움직여요.
+  const PULL = 1.0;                  // 한 번 톡의 힘
+  const PULL_MAX = 6;                // 힘은 여기까지 (한 팀 두 명)
+  const PULL_DECAY = 2.2;            // 1초에 줄어드는 비율
+  const ACCEL = () => g.geo().C * 0.09;   // 힘 1 이 줄 가운데를 미는 가속 (px/초²)
+  const DAMP = 3.0;                  // 줄이 멈추려는 힘
+  const MAX_SHIFT = () => g.geo().C * 0.17;
+  const HASHES = 7;                  // 대각선 위 표시(헤시마크) 칸 수: 가운데 사각형 모서리 ~ 서클 라인
+  const START_HASH = 3;              // 콩주머니 처음 자리: 서클 라인에서 3번째
+  const REACH = () => g.geo().C * 0.05;  // 손이 닿는 거리
+  const GRAB_TIME = 0.35;            // 꾹 눌러 잡는 시간
+  const LET_GO = 0.7;                // 이만큼 안 당기면 줄을 놓친 거예요
+  const PLAYERS = [[1, 3], [5, 8], [9, 10]];
+
+  const settings = { teams: new Set(['red', 'blue', 'green', 'yellow']), heats: 3, whistle: 15 };
+  let rope = { x: 0, y: 0, vx: 0, vy: 0 };   // 줄 가운데 (가운데에서 밀려난 거리)
+  let whistleT = 0, hashes = START_HASH;      // 다음 호루라기까지 · 호루라기로 옮겨 온 칸 (서클 라인에서 몇 번째)
+
+  const g = Court.create({
+    settings, chips: ['heats', 'whistle'],
+    heatName: '조', goText: '당겨!', idleText: '톡톡! 우리 쪽으로', nextReady: '준비',
+    heatTitle: h => ` (No${(PLAYERS[h - 1] || [])[0]} · No${(PLAYERS[h - 1] || [])[1]})`,
+    resultSub: (t, h) => (h.rank ? `${h.time.toFixed(1)}초에 콩주머니를 잡았어요` : '—'),
+    points: [100],
+    isOver: () => TEAMS.some(t => g.state[t.id].finished),
+    center: { top: 0.78, sub: 0.78, rank: 0.8, width: 1.0, subWidth: 1.0 },
+    teamState: () => ({ pull: 0, lastPull: -9, grabbing: false, grabT: 0, legPhase: 0, tries: 0, hash: START_HASH }),   // hash: 우리 팀 콩주머니 칸
+    onReset: () => { rope = { x: 0, y: 0, vx: 0, vy: 0 }; whistleT = settings.whistle; hashes = START_HASH; },
+    padText, padDots: () => [], tap, press, race, draw,
+    progress: (st, t) => reachOf(t),
+  });
+  const { ctx, sfx, tone, geo, at, say, updatePads, refreshPad, burst, drawRunner, warnLabel } = g;
+  sfx.whistle = () => { tone(2200, 0.25, 'square', 0.05); tone(2400, 0.25, 'square', 0.04, 0.05); };
+  sfx.heave = n => tone(n * 0.5, 0.05, 'sawtooth', 0.04);
+
+  // ---------- 자리 ----------
+  const hashStep = () => { const { R, box } = geo(); return (R - box * Math.SQRT2) / HASHES; };
+  const bagDist = t => geo().R - g.state[t.id].hash * hashStep();      // 가운데에서 우리 팀 콩주머니까지
+  const gripR = () => geo().box * Math.SQRT2;                           // 줄 가운데에서 우리 팀이 잡는 곳까지
+  const gripOf = t => { const { c } = geo(); const g0 = gripR(); return { x: c + rope.x + Math.cos(t.angle) * g0, y: c + rope.y + Math.sin(t.angle) * g0 }; };
+  // 우리 팀 대각선 방향으로 손이 얼마나 나갔는지 (콩주머니까지 남은 거리가 0 이하면 닿아요)
+  function reachOf(t) {
+    const { c } = geo();
+    const p = gripOf(t);
+    return (p.x - c) * Math.cos(t.angle) + (p.y - c) * Math.sin(t.angle);
+  }
+  const canGrab = t => reachOf(t) + REACH() >= bagDist(t);
+  const holdingRope = st => performance.now() / 1000 - st.lastPull < LET_GO;
+
+  // ---------- 버튼 ----------
+  function padText(st) {
+    if (st.grabbing) return '잡는 중…';
+    const t = TEAMS.find(x => g.state[x.id] === st);
+    if (t && canGrab(t)) return '꾹 잡기!';
+    return holdingRope(st) ? '톡톡!' : '줄 잡아!';
+  }
+
+  function tap(t, st) {
+    if (st.grabbing) return;
+    if (!g.tapGap(st)) return;
+    st.pull = Math.min(PULL_MAX, st.pull + PULL);
+    st.lastPull = performance.now() / 1000;
+    st.legPhase += 0.8;
+    sfx.heave(t.note);
+  }
+
+  // 손이 닿을 때 꾹 누르면 잡기 시작. GRAB_TIME 동안 계속 닿아 있으면 성공이에요.
+  function press(id, down) {
+    const t = TEAMS.find(x => x.id === id);
+    const st = g.state[id];
+    if (!st || !st.active || g.phase !== 'race' || st.finished) return;
+    if (down && !st.grabbing && canGrab(t)) {
+      if (!holdingRope(st) && st.lastPull > 0) {
+        // 줄을 놓친 채 잡았어요 → 선심이 우리 팀 콩주머니를 원래 자리로
+        st.hash = START_HASH;
+        sfx.foul();
+        say(`${t.name} 줄을 놓친 채 잡았어요! 콩주머니는 원래 자리로`, t.color, 1.8);
+        return;
+      }
+      st.grabbing = true; st.grabT = 0; st.tries++;
+      updatePads();
+    } else if (!down && st.grabbing) {
+      st.grabbing = false;
+      if (st.grabT < GRAB_TIME) { g.shakePad(g.pads[id]); say(`${t.name} 끝까지 꾹 눌러 잡아요!`, t.color, 1.0); }
+      updatePads();
+    }
+  }
+
+  // ---------- 진행 ----------
+  function race(dt) {
+    const { C } = geo();
+    // 네 팀 힘을 합쳐 줄 가운데를 움직여요 (잡는 동안에는 그 팀 힘이 빠져요)
+    let fx = 0, fy = 0;
+    TEAMS.forEach(t => {
+      const st = g.state[t.id];
+      st.pull *= Math.exp(-PULL_DECAY * dt);
+      if (!st.active) return;
+      const f = st.grabbing ? 0 : st.pull;
+      fx += Math.cos(t.angle) * f; fy += Math.sin(t.angle) * f;
+    });
+    rope.vx += (fx * ACCEL() - rope.vx * DAMP) * dt;
+    rope.vy += (fy * ACCEL() - rope.vy * DAMP) * dt;
+    rope.x += rope.vx * dt; rope.y += rope.vy * dt;
+    const d = Math.hypot(rope.x, rope.y), mx = MAX_SHIFT();
+    if (d > mx) { rope.x *= mx / d; rope.y *= mx / d; rope.vx *= 0.5; rope.vy *= 0.5; }
+
+    // 호루라기: 승부가 안 나면 콩주머니가 한 칸씩 가운데로
+    whistleT -= dt;
+    if (whistleT <= 0) {
+      whistleT = settings.whistle;
+      if (hashes < HASHES - 1) {
+        hashes++;
+        TEAMS.forEach(t => { const st = g.state[t.id]; if (st.hash < HASHES - 1) st.hash++; });
+        sfx.whistle();
+        say('삑! 콩주머니 한 칸씩 가운데로', '#16224A', 1.4);
+      }
+    }
+
+    for (const t of TEAMS) {
+      const st = g.state[t.id];
+      if (!st.active || st.finished) continue;
+      if (st.grabbing) {
+        if (!canGrab(t)) {                 // 잡는 동안 끌려가 버렸어요
+          st.grabbing = false; sfx.drop();
+          say(`${t.name} 아깝다! 끌려가서 놓쳤어요`, t.color, 1.2);
+          updatePads();
+        } else {
+          st.grabT += dt;
+          if (st.grabT >= GRAB_TIME) { win(t); break; }
+        }
+      }
+      refreshPad(t);
+    }
+  }
+
+  function win(t) {
+    const st = g.state[t.id];
+    st.finished = true; st.grabbing = false;
+    st.rank = ++g.rankCounter;
+    st.time = g.raceT;
+    const b = at(t.angle, bagDist(t));
+    burst(b.x, b.y, t.color, 60);
+    burst(b.x, b.y, '#FFFFFF', 24);
+    sfx.pin();
+    say(`${t.name} 콩주머니를 잡았어요! +100점`, t.color, 2.4);
+    updatePads();
+  }
+
+  // ---------- 그리기 ----------
+  function draw(now) {
+    g.drawCourt({ track: drawHashes });
+    drawBags(now);
+    drawRope(now);
+    drawWhistle();
+  }
+
+  // 대각선 위 표시(헤시마크): 가운데 사각형 모서리 ~ 서클 라인
+  function drawHashes() {
+    const { C, R } = geo();
+    TEAMS.forEach(t => {
+      const n = t.angle + Math.PI / 2, w = C * 0.014;
+      for (let k = 1; k < HASHES; k++) {
+        const p = at(t.angle, R - k * hashStep());
+        ctx.strokeStyle = hexA(t.color, 0.9); ctx.lineWidth = Math.max(2, C * 0.004); ctx.lineCap = 'butt';
+        ctx.beginPath(); ctx.moveTo(p.x - Math.cos(n) * w, p.y - Math.sin(n) * w); ctx.lineTo(p.x + Math.cos(n) * w, p.y + Math.sin(n) * w); ctx.stroke();
+      }
+    });
+  }
+
+  function drawBags(now) {
+    const { C } = geo();
+    TEAMS.forEach(t => {
+      const st = g.state[t.id];
+      if (!st || !st.active) return;
+      const b = st.finished ? gripOf(t) : at(t.angle, bagDist(t));
+      const s = C * 0.02;
+      const near = g.phase === 'race' && !st.finished && canGrab(t);
+      if (near && !reduceMotion) { ctx.beginPath(); ctx.arc(b.x, b.y, s * (1.6 + Math.sin(now / 120) * 0.15), 0, TAU); ctx.fillStyle = hexA(t.color, 0.35); ctx.fill(); }
+      ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(t.angle);
+      ctx.fillStyle = t.color; ctx.strokeStyle = '#16224A'; ctx.lineWidth = Math.max(2, s * 0.16);
+      ctx.beginPath(); ctx.roundRect(-s * 0.8, -s * 0.55, s * 1.6, s * 1.1, s * 0.3); ctx.fill(); ctx.stroke();
+      ctx.restore();
+    });
+  }
+
+  // 사방 줄: 네 팀이 잡은 곳을 잇는 고리 + 두 명씩 잡은 선수
+  function drawRope(now) {
+    const { C, c } = geo();
+    const pts = TEAMS.map(t => gripOf(t));
+    const mid = { x: c + rope.x, y: c + rope.y };
+    ctx.strokeStyle = '#B98A4B'; ctx.lineWidth = Math.max(4, C * 0.011); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    pts.forEach((p, i) => {
+      const q = pts[(i + 1) % 4];
+      const m = { x: (p.x + q.x) / 2 + (mid.x - (p.x + q.x) / 2) * 0.35, y: (p.y + q.y) / 2 + (mid.y - (p.y + q.y) / 2) * 0.35 };   // 팽팽하게 안쪽으로 휘어요
+      if (i === 0) ctx.moveTo(p.x, p.y);
+      ctx.quadraticCurveTo(m.x, m.y, q.x, q.y);
+    });
+    ctx.closePath(); ctx.stroke();
+    ctx.strokeStyle = 'rgba(22,34,74,.35)'; ctx.lineWidth = Math.max(1, C * 0.003); ctx.setLineDash([3, 4]); ctx.stroke(); ctx.setLineDash([]);
+
+    const size = C * 0.02;
+    TEAMS.forEach((t, i) => {
+      const st = g.state[t.id];
+      if (!st || !st.active) return;
+      const p = pts[i];
+      // 표시 부분 (팀 색)
+      ctx.beginPath(); ctx.arc(p.x, p.y, C * 0.008, 0, TAU); ctx.fillStyle = t.color; ctx.fill();
+      const nos = PLAYERS[g.match.heat - 1] || [1, 2];
+      const pulling = g.phase === 'race' && st.pull > 0.8 && !st.grabbing;
+      const lean = pulling ? size * 0.35 * Math.min(1, st.pull / 3) : 0;
+      const out = t.angle;
+      [-1, 1].forEach((sd, k) => {
+        const side = t.angle + Math.PI / 2 * sd;
+        const x = p.x + Math.cos(side) * size * 1.25 + Math.cos(out) * (size * 0.9 + lean);
+        const y = p.y + Math.sin(side) * size * 1.25 + Math.sin(out) * (size * 0.9 + lean);
+        ctx.strokeStyle = '#16224A'; ctx.lineWidth = Math.max(2, size * 0.2);
+        ctx.beginPath(); ctx.moveTo(p.x + Math.cos(side) * size * 0.4, p.y + Math.sin(side) * size * 0.4); ctx.lineTo(x, y); ctx.stroke();
+        drawRunner(t, x, y, out, size, st.legPhase + k, { moving: pulling, speed: 0.4, label: nos[k] });
+      });
+      if (g.phase === 'race' && !st.finished) {
+        const lp = at(t.angle, reachOf(t) + C * 0.075);
+        const lx = lp.x + Math.cos(t.angle + Math.PI / 2) * C * 0.06, ly = lp.y + Math.sin(t.angle + Math.PI / 2) * C * 0.06;
+        if (st.grabbing) warnLabel(lx, ly, '잡는 중!', true);
+        else if (canGrab(t)) warnLabel(lx, ly, '꾹 잡기!', true);
+      }
+    });
+    // 줄 가운데 매듭
+    ctx.beginPath(); ctx.arc(mid.x, mid.y, C * 0.012, 0, TAU); ctx.fillStyle = '#8A6A3A'; ctx.fill();
+  }
+
+  // 주심 호루라기까지 남은 시간
+  function drawWhistle() {
+    if (g.phase !== 'race' && g.phase !== 'over') return;
+    const { c, R, C } = geo();
+    const text = hashes < HASHES - 1 ? `다음 호루라기 ${Math.max(0, Math.ceil(whistleT))}초 · 콩주머니 ${hashes}번째 칸` : `콩주머니 ${hashes}번째 칸 (마지막)`;
+    ctx.font = font(C * 0.028); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.lineWidth = C * 0.008; ctx.strokeStyle = '#fff'; ctx.lineJoin = 'round'; ctx.strokeText(text, c, c + R * 0.62);
+    ctx.fillStyle = whistleT < 4 && hashes < HASHES - 1 ? '#E8403A' : 'rgba(22,34,74,.6)';
+    ctx.fillText(text, c, c + R * 0.62);
+  }
+
+  g.run();
+})();
+</script>
+<script>
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    addEventListener('load', () => navigator.serviceWorker.register('../sw.js', { scope: '../' }));
+  }
+</script>
+</body>
+</html>
