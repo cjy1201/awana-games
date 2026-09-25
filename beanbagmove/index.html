@@ -1,0 +1,697 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>T&amp;T 콩주머니 옮기기</title>
+<meta name="description" content="AWANA T&amp;T 콩주머니 옮기기(2026 어와나 올림픽 규칙)를 옮긴 네 팀 게임: 번호를 부르면 달려가 콩주머니를 원반에 올리고 종료 핀까지">
+<meta name="theme-color" content="#16224A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AWANA 게임">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" type="image/png" href="../icons/favicon.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="preload" href="../fonts/jua.woff" as="font" type="font/woff" crossorigin>
+<link rel="stylesheet" href="../shared/court.css">
+<style>
+  /* 한 번에 한 명씩 뛰어서 작은 동그라미가 없어요 */
+  .pad-runners { display: none; }
+  /* 번호판: 번호를 부르면 그 번호 선수를 골라 내보내요 (팀 쪽을 보게 돌려 놓아요) */
+  .picker {
+    position: absolute; z-index: 4;
+    display: grid; grid-template-columns: repeat(5, var(--b)); gap: 4px; padding: 6px;
+    background: rgba(255,255,255,.95); border: 3px solid var(--c); border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(0,0,0,.25); touch-action: none;
+  }
+  .picker[hidden] { display: none !important; }
+  .picker button {
+    width: var(--b); height: var(--b); padding: 0; border-radius: 50%;
+    border: 3px solid #fff; background: var(--c); color: var(--t);
+    font-family: var(--display); font-size: calc(var(--b) * .45); line-height: 1;
+    box-shadow: 0 2px 0 rgba(22,34,74,.35); cursor: pointer;
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+  }
+  .picker button:active { transform: translateY(2px); box-shadow: none; }
+  .picker.blocked button { opacity: .35; }
+  .picker.wrong { border-color: #E8403A; background: #FFE3E1; }
+</style>
+<!-- 방문 통계 (GoatCounter: 쿠키·개인정보 없이 페이지별 방문 수만 셉니다) -->
+<script data-goatcounter="https://cjy1201.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</head>
+<body>
+
+<div id="stage">
+  <canvas id="court" aria-label="AWANA 게임 트랙"></canvas>
+
+  <button class="pad" data-team="red" aria-label="빨강 팀 버튼"><div class="pad-inner"><span class="pad-name">빨강</span><span class="pad-runners"></span><span class="pad-state">준비</span></div></button>
+  <button class="pad" data-team="blue" aria-label="파랑 팀 버튼"><div class="pad-inner"><span class="pad-name">파랑</span><span class="pad-runners"></span><span class="pad-state">준비</span></div></button>
+  <button class="pad" data-team="green" aria-label="초록 팀 버튼"><div class="pad-inner"><span class="pad-name">초록</span><span class="pad-runners"></span><span class="pad-state">준비</span></div></button>
+  <button class="pad" data-team="yellow" aria-label="노랑 팀 버튼"><div class="pad-inner"><span class="pad-name">노랑</span><span class="pad-runners"></span><span class="pad-state">준비</span></div></button>
+
+  <div id="tools">
+    <a class="tool" href="../" aria-label="게임 모음으로">← 게임 모음</a>
+    <button class="tool" id="helpBtn" type="button">게임 방법</button>
+    <button class="tool" id="soundBtn" type="button" aria-pressed="true">소리 켜짐</button>
+  </div>
+
+  <!-- 게임 방법 + 설정 -->
+  <div class="overlay" id="intro">
+    <div class="sheet">
+      <h1>T&amp;T<span class="stripe" aria-hidden="true"><b style="background:var(--red)"></b><b style="background:var(--blue)"></b><b style="background:var(--green)"></b><b style="background:var(--yellow)"></b></span>콩주머니 옮기기</h1>
+      <p class="scoreline">선수 전원(No1~No10) · <b>총 4회</b>, 중앙에서 번호를 부르면 그 번호 선수가 출발 · <b>1등 200점 · 2등 100점</b></p>
+
+      <div class="steps">
+        <div class="step">
+          <svg viewBox="0 0 96 96" aria-hidden="true">
+            <path d="M16 20 h64 a8 8 0 0 1 8 8 v26 a8 8 0 0 1 -8 8 h-38 l-14 12 v-12 h-12 a8 8 0 0 1 -8 -8 v-26 a8 8 0 0 1 8 -8 z" fill="#fff" stroke="#16224A" stroke-width="3" stroke-linejoin="round"/>
+            <text x="48" y="49" text-anchor="middle" font-family="Jua, sans-serif" font-size="22" fill="#E8403A">다섯!</text>
+            <path d="M8 88 h80" stroke="#1FA35A" stroke-width="5" stroke-linecap="round"/>
+          </svg>
+          <strong>번호를 잘 들어요</strong>
+          <span>번호를 부르면 우리 팀 번호판에서<br>그 번호를 눌러 선수를 내보내요</span>
+        </div>
+        <div class="step">
+          <svg viewBox="0 0 96 96" aria-hidden="true">
+            <path d="M8 76 h80" stroke="#16224A" stroke-width="3"/>
+            <circle cx="18" cy="62" r="11" fill="#AEB6C6" stroke="#16224A" stroke-width="2.5"/>
+            <rect x="10" y="57" width="16" height="10" rx="3" fill="#1FA35A" stroke="#16224A" stroke-width="2.5"/>
+            <circle cx="78" cy="62" r="11" fill="#AEB6C6" stroke="#16224A" stroke-width="2.5"/>
+            <path d="M70 44 Q48 26 26 44" fill="none" stroke="#16224A" stroke-width="3" stroke-dasharray="5 5"/>
+            <path d="M26 44 l2 -9 M26 44 l9 -1" stroke="#16224A" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+          <strong>콩주머니 가져오기</strong>
+          <span>우리 팀 변 끝 모서리 원반에서<br>콩주머니를 집어 출발 모서리로 와요</span>
+        </div>
+        <div class="step">
+          <svg viewBox="0 0 96 96" aria-hidden="true">
+            <ellipse cx="48" cy="62" rx="30" ry="14" fill="#AEB6C6" stroke="#16224A" stroke-width="3"/>
+            <rect x="34" y="48" width="28" height="16" rx="5" fill="#1FA35A" stroke="#16224A" stroke-width="3"/>
+            <text x="48" y="30" text-anchor="middle" font-family="Jua, sans-serif" font-size="18" fill="#1FA35A">살살 놓기</text>
+          </svg>
+          <strong>원반에 올려놓기</strong>
+          <span>너무 빨리 놓으면 미끄러져요.<br>원반을 완전히 벗어나면 실격</span>
+        </div>
+        <div class="step">
+          <svg viewBox="0 0 96 96" aria-hidden="true">
+            <path d="M86 88 L10 12" stroke="#1FA35A" stroke-width="4" stroke-linecap="round" opacity=".5"/>
+            <g transform="translate(52 58)"><path d="M0 -24 m-5 0 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0 M-3 -18 h6 l3 10 q4 8 1 16 h-14 q-3 -8 1 -16 z" fill="#fff" stroke="#16224A" stroke-width="2.5" stroke-linejoin="round"/></g>
+            <path d="M84 84 Q80 50 66 40 Q48 28 30 30" fill="none" stroke="#16224A" stroke-width="3" stroke-dasharray="5 5"/>
+            <path d="M30 30 l8 -5 M30 30 l7 5" stroke="#16224A" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+          <strong>서클 핀 오른쪽으로</strong>
+          <span>색깔 핀 오른쪽으로 들어가<br>가운데 종료 핀을 손으로 “살살”</span>
+        </div>
+      </div>
+
+      <div class="foul">
+        <b>이러면 실격!</b>
+        <ul>
+          <li>번호를 부르기 전에 팀 대기라인·제한라인을 밟거나 넘으면 (번호판·버튼을 먼저 누르면)</li>
+          <li>부른 번호가 아닌 선수가 나가면 (번호판에서 다른 번호를 누르면)</li>
+          <li>콩주머니가 원반을 완전히 벗어나면 (조금 걸친 건 괜찮아요)</li>
+          <li>종료 핀을 슬라이딩이나 점프로 넘어뜨리면 (너무 빠르게 들어가면)</li>
+          <li>가운데로 들어갈 때 서클 핀 왼쪽으로 들어가면</li>
+        </ul>
+      </div>
+
+      <div class="settings">
+        <div class="row" role="group" aria-label="참가 팀">
+          <span class="lbl">참가 팀</span>
+          <button class="chip" type="button" data-pick="red" aria-pressed="true" style="--c:var(--red)">빨강</button>
+          <button class="chip" type="button" data-pick="blue" aria-pressed="true" style="--c:var(--blue)">파랑</button>
+          <button class="chip" type="button" data-pick="green" aria-pressed="true" style="--c:var(--green)">초록</button>
+          <button class="chip" type="button" data-pick="yellow" aria-pressed="true" style="--c:var(--yellow);--t:#16224A">노랑</button>
+        </div>
+        <div class="row" role="group" aria-label="경기 수">
+          <span class="lbl">경기</span>
+          <button class="chip" type="button" data-heats="4" aria-pressed="true">4회 (정식)</button>
+          <button class="chip" type="button" data-heats="1" aria-pressed="false">1회</button>
+        </div>
+        <div class="row" role="group" aria-label="원반에 놓기 난이도">
+          <span class="lbl">원반 놓기</span>
+          <button class="chip" type="button" data-place="0" aria-pressed="false">쉬움</button>
+          <button class="chip" type="button" data-place="1" aria-pressed="true">보통</button>
+          <button class="chip" type="button" data-place="2" aria-pressed="false">어려움</button>
+        </div>
+        <div class="row" role="group" aria-label="실격 규칙">
+          <span class="lbl">규칙</span>
+          <button class="chip" type="button" data-strict="1" aria-pressed="true">정식 (실격)</button>
+          <button class="chip" type="button" data-strict="0" aria-pressed="false">연습 (실격 대신 잠깐 멈춤)</button>
+        </div>
+      </div>
+
+      <button class="go" id="startBtn" type="button">시작하기</button>
+      <p class="keys">“기다려!” 동안은 아무것도 누르지 않아요 · 번호를 부르면 번호판에서 그 번호를 누르고 팀 버튼을 톡톡 · 원반과 종료 핀 앞에서는 살살 · 키보드 연습: 빨강 Q · 파랑 P · 초록 M · 노랑 Z (번호판은 마우스로)</p>
+    </div>
+  </div>
+
+  <!-- 결과 -->
+  <div class="overlay" id="result" hidden>
+    <div class="sheet">
+      <h2 id="resultTitle">경기 결과</h2>
+      <div class="podium" id="podium"></div>
+      <div class="buttons">
+        <button class="go" id="nextBtn" type="button">다음</button>
+        <button class="go ghost" id="menuBtn" type="button">설정 바꾸기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../shared/court.js"></script>
+<script>
+(() => {
+  const { TAU, TEAMS, hexA, reduceMotion, font, easeOut } = Court;
+
+  // 달리기 느낌 조절값 (거리 단위: px)
+  const DECAY = 1.6;
+  const VMAX = () => g.geo().C * 0.55;          // 최고 속도 (px/초)
+  const WALK = 0.3;                             // 원반·종료 핀 앞에서는 손을 떼도 걸어서 가요
+  const INSET = 0.055;                          // 달리는 길: 경기장 변에서 안쪽으로 (C 배수)
+  const DISC_IN = 0.032;                        // 원반: 모서리에 붙여 놓아요 (두 변에서 안쪽으로, C 배수)
+  const PLACE_SAFE = 0.5;                       // 원반에 놓을 때 이보다 빠르면 콩주머니가 미끄러질 수 있어요
+  const PLACE_CHANCE = [0.1, 0.25, 0.5];        // 쉬움 · 보통 · 어려움 (최고 속도로 놓을 때 원반을 완전히 벗어날 확률)
+  const RETRY_TIME = 1.2;                       // 연습: 콩주머니를 다시 올리는 시간(초)
+  const LATE = 0.8;                             // 연습: 번호를 부르기 전에 누르면 이만큼 늦게 출발 (최대 두 번)
+  const LINE = 10;                              // No1 ~ No10
+
+  const settings = { teams: new Set(['red', 'blue', 'green', 'yellow']), heats: 4, place: 1, strict: 1 };
+  let calls = [];         // 회마다 부른 번호 (한 경기에서 겹치지 않게)
+  const called = () => calls[g.match.heat - 1] || 1;
+
+  const g = Court.create({
+    settings, chips: ['heats', 'place', 'strict'],
+    heatName: '회', nextReady: '준비',
+    goText: () => `${called()}번!`,
+    idleText: () => `${called()}번 선수 출발!`,
+    heatTitle: h => (calls[h - 1] ? ` (${calls[h - 1]}번)` : ''),
+    points: [200, 100],
+    resultSub: (t, h) => `${h.time.toFixed(1)}초`,
+    teamState: () => ({
+      d: 0, v: 0, legPhase: 0, zone: null, moved: false,
+      hold: 0, holdKind: '',     // 잠깐 멈춤: pick 집기 · place 놓기 · retry 다시 올리기 · late 늦은 출발
+      penalty: 0,                // 연습: 번호 부르기 전에 누른 만큼 늦게 출발
+      bag: 'far',                // far 변 끝 원반 위 · hand 손에 · placed 출발 모서리 원반 위
+      slide: null,               // 놓은 콩주머니가 미끄러진 방향과 거리
+      early: false,              // 번호를 부르기 전에 나가서 실격
+      picked: false,             // 번호판에서 부른 번호 선수를 골랐는지
+      pickBlock: 0,              // 연습: 다른 번호를 누르면 잠깐 번호판이 잠겨요 (시각, ms)
+    }),
+    onReset,
+    countdown: () => 1.6 + Math.random() * 2.4,   // 번호를 부를 때까지 두근두근 (매번 달라요)
+    waitPad: '기다려!',
+    drawWait, early,
+    padText, padDots: () => [], tap, race, tick, draw,
+    progress: (st, t) => st.d / (pathOf(t).L || 1),
+  });
+  const { ctx, sfx, tone, geo, at, pinOf, ringPinOf, cornerOf, say, updatePads, refreshPad, burst,
+          drawOnePin, drawRunner, warnLabel, fitText } = g;
+  sfx.pick = () => [440, 660].forEach((f, i) => tone(f, 0.07, 'triangle', 0.07, i * 0.06));
+  sfx.place = () => [392, 523].forEach((f, i) => tone(f, 0.1, 'triangle', 0.08, i * 0.08));
+  sfx.slip = () => [330, 260, 200].forEach((f, i) => tone(f, 0.1, 'sawtooth', 0.05, i * 0.07));
+
+  // 회마다 중앙에서 부를 번호: 한 경기(4회) 안에서는 겹치지 않게
+  function onReset() {
+    pathCache = { key: '', paths: {} };
+    if (g.match.heat === 1 && !g.match.history.length) calls = [];
+    while (calls.length < g.match.heat) {
+      const left = [];
+      for (let k = 1; k <= LINE; k++) if (!calls.includes(k)) left.push(k);
+      calls.push(left[Math.floor(Math.random() * left.length)]);
+    }
+  }
+
+  // ---------- 자리 ----------
+  // 우리 팀 변: 출발 모서리(우리 팀 대각선 끝, f = 0) → 다음 팀 모서리(f = 1).
+  // off: 변에서 바깥쪽으로 떨어진 거리 (음수면 경기장 안쪽)
+  const nextOf = t => TEAMS[(TEAMS.indexOf(t) + 1) % 4];
+  function sidePt(t, f, off) {
+    const a = cornerOf(t), b = cornerOf(nextOf(t));
+    const out = t.angle + Math.PI / 4;
+    return { x: a.x + (b.x - a.x) * f + Math.cos(out) * off, y: a.y + (b.y - a.y) * f + Math.sin(out) * off };
+  }
+  // 원반: 네 모서리에 하나씩, 대각선 위. 우리 팀은 변 끝 원반의 콩주머니를 가져와 출발 모서리 원반에 올려요
+  const discR = () => geo().C * 0.024;
+  const bagSize = () => geo().C * 0.017;
+  const cornerDisc = t => sidePt(t, DISC_IN, -geo().C * DISC_IN);      // t 팀 출발 모서리 원반
+  const farDisc = t => cornerDisc(nextOf(t));                            // = 다음 팀 출발 모서리 원반
+  // 기다리는 선수: 팀 대기라인(경기장 변) 바깥, No1 이 출발 모서리 쪽 (버튼은 반대쪽 끝에 있어요)
+  const queueF = k => 0.05 + (k - 1) * 0.047;
+  const queueSpot = (t, k) => sidePt(t, queueF(k), geo().m * 0.5);
+
+  // ---------- 달리는 길 ----------
+  // 대기 자리 → 경기장 안 → 변을 따라 끝 모서리 원반(집기) → 출발 모서리 원반(놓기)
+  // → 서클 핀 오른쪽으로 → 가운데 종료 핀 앞
+  let pathCache = { key: '', paths: {} };
+  function pathOf(t) {
+    const key = g.S + ':' + called();
+    if (pathCache.key !== key) pathCache = { key, paths: {} };
+    if (pathCache.paths[t.id]) return pathCache.paths[t.id];
+    const { C, R } = geo();
+    const A = t.angle, k = called();
+    const pts = [];
+    const line = (a, b, n) => { for (let i = 1; i <= n; i++) pts.push({ x: a.x + (b.x - a.x) * i / n, y: a.y + (b.y - a.y) * i / n }); };
+    const q = queueSpot(t, k);
+    const enter = sidePt(t, queueF(k) + 0.04, -C * INSET);
+    const far = farDisc(t), home = cornerDisc(t);
+    pts.push(q);
+    line(q, enter, 4);
+    line(enter, far, 30);
+    const pickI = pts.length - 1;
+    // 돌아올 때도 달리는 길로 (모서리 원반에서 한 발 나와 변을 따라)
+    const laneFar = sidePt(t, 1 - 0.09, -C * INSET), laneHome = sidePt(t, 0.09, -C * INSET);
+    line(far, laneFar, 4);
+    line(laneFar, laneHome, 36);
+    line(laneHome, home, 4);
+    const placeI = pts.length - 1;
+    pts.push(...entryCurve(t));
+    const len = [0];
+    for (let i = 1; i < pts.length; i++) len.push(len[i - 1] + Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y));
+    return (pathCache.paths[t.id] = { pts, len, L: len[len.length - 1], pickD: len[pickI], placeD: len[placeI] });
+  }
+  // 출발 모서리 원반 → 서클 핀 오른쪽(달리는 사람 기준) → 종료 핀 앞. 원반 자리는 빼고 돌려줘요
+  function entryCurve(t) {
+    const { C, R } = geo();
+    const A = t.angle;
+    const way = [cornerDisc(t), at(A - 0.05, R * 1.3), at(A - 0.2, R), at(A - 0.15, R * 0.7), at(A - 0.04, R * 0.45), at(A, C * 0.11)];
+    const out = [];
+    for (let s = 0; s < way.length - 1; s++) {
+      const p0 = way[Math.max(0, s - 1)], p1 = way[s], p2 = way[s + 1], p3 = way[Math.min(way.length - 1, s + 2)];
+      for (let i = 1; i <= 10; i++) {
+        const u = i / 10, u2 = u * u, u3 = u2 * u;
+        const cr = k => 0.5 * (2 * p1[k] + (-p0[k] + p2[k]) * u + (2 * p0[k] - 5 * p1[k] + 4 * p2[k] - p3[k]) * u2 + (-p0[k] + 3 * p1[k] - 3 * p2[k] + p3[k]) * u3);
+        out.push({ x: cr('x'), y: cr('y') });
+      }
+    }
+    return out;
+  }
+  function posAt(t, d) {
+    const { pts, len, L } = pathOf(t);
+    d = Math.max(0, Math.min(d, L));
+    let lo = 1, hi = len.length - 1;
+    while (lo < hi) { const m = (lo + hi) >> 1; if (len[m] < d) lo = m + 1; else hi = m; }
+    const i = lo, a = pts[i - 1], b = pts[i];
+    const f = (d - len[i - 1]) / ((len[i] - len[i - 1]) || 1);
+    return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f, dir: Math.atan2(b.y - a.y, b.x - a.x) };
+  }
+  // 경고는 원반·종료 핀에 닿기 조금 전부터. 최고 속도에서 경고를 보고 손을 떼도 닿기 전에 충분히 느려지는 거리예요
+  // (속도가 1초에 DECAY 비율로 줄어서, 최고 속도 → 안전 속도까지 VMAX × (1 − 안전) / DECAY 만큼 가요)
+  const PRE_PLACE = () => VMAX() * (1 - PLACE_SAFE) / DECAY * 1.15;
+  const PRE_FINAL = () => VMAX() * (1 - Court.FINISH_SAFE) / DECAY * 1.15;
+  function zoneOf(t, st) {
+    const p = pathOf(t);
+    if (st.d >= p.L - PRE_FINAL()) return 'final';
+    if (st.bag === 'hand' && st.d >= p.placeD - PRE_PLACE()) return 'place';
+    return null;
+  }
+
+  // ---------- 버튼 ----------
+  function padText(st) {
+    if (!st.picked) return `${called()}번 고르기`;
+    if (st.hold > 0) return { pick: '집었다!', place: '올려놓기', retry: '다시 올리기', late: '늦게 출발…' }[st.holdKind] || '톡톡!';
+    if (st.zone === 'place') return '살살 놓기!';
+    if (st.zone === 'final') return '살살!';
+    if (!st.moved) return `${called()}번 톡톡!`;
+    return '톡톡!';
+  }
+
+  function tap(t, st, el) {
+    if (!st.picked) { g.shakePad(el); return; }   // 번호판에서 선수부터 골라요
+    if (!g.tapGap(st)) return;
+    st.v = Math.min(VMAX(), st.v + VMAX() * 0.2);
+    st.moved = true;
+    sfx.tap(t.note);
+  }
+
+  // 번호를 부르기 전에 눌렀어요 = 선을 밟거나 넘었어요
+  function early(t, st, el) {
+    g.shakePad(el);
+    sfx.foul();
+    if (settings.strict) {
+      st.dq = true; st.early = true; st.dqReason = '번호를 부르기 전에 선을 넘음';
+      say(`${t.name} 실격! 번호를 부르기 전에 나갔어요`, t.color, 2.4);
+      updatePads();
+    } else {
+      st.penalty = Math.min(LATE * 2, st.penalty + LATE);
+      say(`${t.name}! 아직 번호를 안 불렀어요`, t.color, 1.3);
+    }
+  }
+
+  // ---------- 진행 ----------
+  function disqualify(t, reason) {
+    const st = g.state[t.id];
+    st.dq = true; st.dqReason = reason; st.v = 0; st.hold = 0;
+    const p = posAt(t, st.d);
+    burst(p.x, p.y, '#16224A', 24);
+    sfx.foul();
+    say(`${t.name} 실격! ${reason}`, t.color, 2.6);
+    updatePads();
+  }
+
+  // 출발 모서리 원반에 콩주머니 놓기: 빠를수록 미끄러지고, 원반을 완전히 벗어나면 실격 (확률)
+  function placeBag(t, st) {
+    const sp = st.v / VMAX();
+    const r = discR(), b = bagSize();
+    let dist, off = false;
+    if (sp <= PLACE_SAFE) dist = r * 0.35 * Math.random();
+    else {
+      const over = Math.min(1, (sp - PLACE_SAFE) / (1 - PLACE_SAFE));
+      if (Math.random() < PLACE_CHANCE[settings.place] * (0.4 + 0.6 * over)) { off = true; dist = r + b * 1.5 + r * 0.6 * Math.random(); }
+      else dist = r * (0.3 + 0.95 * over * Math.random());
+    }
+    const p = pathOf(t);
+    st.bag = 'placed';
+    st.slide = { dir: posAt(t, p.placeD - 2).dir + (Math.random() - 0.5) * 0.8, dist, t: 0 };
+    st.v *= 0.2;
+    st.hold = 0.35; st.holdKind = 'place';
+    if (off) {
+      if (settings.strict) { disqualify(t, '콩주머니가 원반을 완전히 벗어남'); return; }
+      st.hold += RETRY_TIME; st.holdKind = 'retry';
+      sfx.slip();
+      say(`${t.name} 원반 밖으로! 다시 올려요`, t.color, 1.4);
+    } else {
+      sfx.place();
+      if (dist > r * 0.9) say(`${t.name} 아슬아슬! 원반에 걸쳤어요`, t.color, 1.1);
+    }
+    updatePads();
+  }
+
+  function race(dt) {
+    for (const t of TEAMS) {
+      const st = g.state[t.id];
+      if (!st.active || st.finished || st.dq) continue;
+      if (!st.picked) { refreshPad(t); continue; }
+      const path = pathOf(t);
+      if (st.penalty) { st.hold = st.penalty; st.holdKind = 'late'; st.penalty = 0; updatePads(); }
+      st.v *= Math.exp(-DECAY * dt);
+      if (st.hold > 0) {
+        st.hold -= dt;
+        if (st.hold <= 0) {
+          st.hold = 0;
+          if (st.holdKind === 'retry') { st.slide = { dir: st.slide.dir, dist: discR() * 0.3 * Math.random(), t: 1 }; sfx.place(); }
+          st.holdKind = '';
+          updatePads();
+        }
+        refreshPad(t);
+        continue;
+      }
+      if (st.moved && st.zone && st.v < VMAX() * WALK) st.v = VMAX() * WALK;   // 손을 떼도 걸어서는 가요 (출발 전엔 가만히)
+      const before = st.d;
+      st.d += st.v * dt;
+      st.legPhase += st.v * dt * 0.14;
+
+      // 변 끝 모서리 원반: 콩주머니 집기 (잠깐 멈춰요)
+      if (before < path.pickD && st.d >= path.pickD) {
+        st.d = path.pickD; st.bag = 'hand'; st.v *= 0.3;
+        st.hold = 0.25; st.holdKind = 'pick';
+        const p = farDisc(t);
+        burst(p.x, p.y, t.color, 10);
+        sfx.pick();
+        updatePads();
+        continue;
+      }
+      // 출발 모서리 원반: 올려놓기
+      if (before < path.placeD && st.d >= path.placeD) {
+        st.d = path.placeD;
+        placeBag(t, st);
+        continue;
+      }
+      // 종료 핀 도착: 너무 빠르면 슬라이딩 실격
+      if (st.d >= path.L) {
+        st.d = path.L;
+        if (g.slideFoul(st.v / VMAX())) { st.pinFall = 0.001; disqualify(t, '슬라이딩으로 종료 핀을 넘어뜨림'); }
+        else g.knockPin(t);
+        continue;
+      }
+      const z = st.moved ? zoneOf(t, st) : null;   // 처음 톡 하기 전엔 경고 없이
+      if (z !== st.zone) { st.zone = z; updatePads(); }
+      refreshPad(t);
+    }
+  }
+
+  function tick(dt) {
+    syncPickers();
+    TEAMS.forEach(t => {
+      const st = g.state[t.id];
+      if (st && st.slide && st.slide.t < 1) st.slide.t = Math.min(1, st.slide.t + dt / 0.35);
+    });
+  }
+
+  // ---------- 그리기 ----------
+  function draw(now) {
+    g.drawCourt({ track: drawHints, startLines: false });
+    drawDiscs();
+    drawPins(now);
+    drawTeams(now);
+    drawCall();
+  }
+
+  // 달리는 길 안내: 변을 따라 가는 길과 서클 핀 오른쪽으로 들어가는 길 (점선)
+  function drawHints(on) {
+    const { C } = geo();
+    TEAMS.forEach(t => {
+      if (!on(t)) return;
+      ctx.strokeStyle = hexA(t.color, 0.45); ctx.lineWidth = 2; ctx.setLineDash([5, 6]);
+      const a = cornerDisc(t), b = farDisc(t);
+      const la = sidePt(t, 0.09, -C * INSET), lb = sidePt(t, 1 - 0.09, -C * INSET);
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(la.x, la.y); ctx.lineTo(lb.x, lb.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      const curve = entryCurve(t);
+      ctx.beginPath(); ctx.moveTo(a.x, a.y);
+      curve.forEach(p => ctx.lineTo(p.x, p.y));
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // 화살표: 서클 핀 오른쪽을 지나는 곳
+      const i = 18, p = curve[i], q = curve[i + 1];
+      const dir = Math.atan2(q.y - p.y, q.x - p.x), hs = C * 0.016;
+      ctx.strokeStyle = hexA(t.color, 0.8); ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(p.x + Math.cos(dir + 2.5) * hs, p.y + Math.sin(dir + 2.5) * hs);
+      ctx.lineTo(p.x, p.y);
+      ctx.lineTo(p.x + Math.cos(dir - 2.5) * hs, p.y + Math.sin(dir - 2.5) * hs);
+      ctx.stroke();
+    });
+  }
+
+  // 네 모서리 원반
+  function drawDiscs() {
+    const r = discR();
+    TEAMS.forEach(t => {
+      const p = cornerDisc(t);
+      ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, TAU);
+      ctx.fillStyle = '#AEB6C6'; ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = '#16224A'; ctx.stroke();
+      ctx.beginPath(); ctx.arc(p.x, p.y, r * 0.55, 0, TAU);
+      ctx.strokeStyle = 'rgba(22,34,74,.25)'; ctx.stroke();
+    });
+    // 변 끝 원반에서 기다리는 콩주머니 → 올려놓은 콩주머니 순서로
+    TEAMS.forEach(t => {
+      const st = g.state[t.id];
+      if (!st || !st.active || st.bag !== 'far') return;
+      const p = farDisc(t);
+      drawBag(t, p.x, p.y, bagSize(), 0.3);
+    });
+    TEAMS.forEach(t => {
+      const st = g.state[t.id];
+      if (!st || !st.active || st.bag !== 'placed' || !st.slide) return;
+      const p = placedAt(t, st);
+      drawBag(t, p.x, p.y, bagSize(), st.slide.dir);
+    });
+  }
+  function placedAt(t, st) {
+    const p = cornerDisc(t), s = st.slide;
+    const d = s.dist * easeOut(s.t);
+    return { x: p.x + Math.cos(s.dir) * d, y: p.y + Math.sin(s.dir) * d };
+  }
+  function drawBag(t, x, y, size, tilt = 0) {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(tilt);
+    ctx.fillStyle = t.color;
+    ctx.strokeStyle = '#16224A'; ctx.lineWidth = Math.max(2, size * 0.16);
+    ctx.beginPath(); ctx.roundRect(-size * 0.8, -size * 0.5, size * 1.6, size, size * 0.28); ctx.fill(); ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawPins(now) {
+    const { C } = geo();
+    TEAMS.forEach(t => {
+      const rp = ringPinOf(t);
+      drawOnePin(rp.x, rp.y, C * 0.05, t.color, 0, t.angle, null, now);
+    });
+    TEAMS.forEach(t => {
+      const st = g.state[t.id];
+      if (!st || !st.active) return;
+      const p = pinOf(t);
+      const goal = g.phase === 'race' && !st.finished && !st.dq && st.zone === 'final';
+      drawOnePin(p.x, p.y, C * 0.075, t.color, st.pinFall, t.angle + Math.PI, goal ? hexA(t.color, 0.4) : null, now);
+    });
+  }
+
+  function drawTeams(now) {
+    const { C, c, m } = geo();
+    const size = C * 0.022, qs = Math.min(C * 0.016, m * 0.4);
+    TEAMS.forEach(t => {
+      const st = g.state[t.id];
+      if (!st || !st.active) return;
+
+      // 팀 대기라인 바깥에 선 선수들 (번호를 부르면 그 선수만 나가요)
+      const a = queueSpot(t, 1), b = queueSpot(t, LINE);
+      ctx.strokeStyle = 'rgba(255,255,255,.4)'; ctx.lineWidth = qs * 2.5; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      for (let k = 1; k <= LINE; k++) {
+        if (st.picked && k === called()) continue;
+        const q = queueSpot(t, k);
+        drawRunner(t, q.x, q.y, t.angle + Math.PI / 4 + Math.PI, qs, 0, { label: k, faded: st.picked });
+      }
+
+      // 나간 선수
+      if (st.picked) {
+        const p = posAt(t, st.d);
+        const racing = g.phase === 'race';
+        const moving = racing && st.v > 1 && !st.dq && !st.hold;
+        drawRunner(t, p.x, p.y, p.dir, size, st.legPhase, { moving, speed: st.v / VMAX(), label: called(), last: true, faded: st.dq });
+        if (st.bag === 'hand' && !st.dq) drawBag(t, p.x + Math.cos(p.dir) * size * 1.15, p.y + Math.sin(p.dir) * size * 1.15, bagSize() * 0.9, p.dir);
+        if (racing && !st.dq && !st.finished) {
+          const lx = p.x + (c - p.x) * 0.2, ly = p.y + (c - p.y) * 0.2;
+          if (st.holdKind === 'retry') warnLabel(lx, ly, '다시 올려요', false);
+          else if (st.holdKind === 'late') warnLabel(lx, ly, '늦은 출발', false);
+          else if (st.zone) {
+            const fast = st.v / VMAX() > (st.zone === 'place' ? PLACE_SAFE : Court.FINISH_SAFE);
+            warnLabel(lx, ly, fast ? '살살!' : '좋아요', !fast);
+          }
+        }
+        if (st.dq) drawX(p.x, p.y, size);
+      }
+      // 번호를 부르기 전에 나가거나 다른 번호가 나간 팀: 대기줄 위에 X
+      if (st.dq && !st.picked) { const q = sidePt(t, queueF(5.5), m * 0.5); drawX(q.x, q.y, size * 1.3); }
+    });
+  }
+  function drawX(x, y, size) {
+    ctx.strokeStyle = '#E8403A'; ctx.lineWidth = Math.max(3, size * 0.25); ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x - size, y - size); ctx.lineTo(x + size, y + size);
+    ctx.moveTo(x + size, y - size); ctx.lineTo(x - size, y + size);
+    ctx.stroke();
+  }
+
+  // 번호를 부른 순간: 가운데에 크게 (1.6초 뒤 사라져요)
+  function drawCall() {
+    if (g.phase !== 'race' || g.raceT > 1.6) return;
+    const { c, C } = geo();
+    const T = g.raceT;
+    const grow = reduceMotion ? 1 : easeOut(Math.min(1, T / 0.25));
+    ctx.globalAlpha = T < 1.1 ? 1 : Math.max(0, 1 - (T - 1.1) / 0.5);
+    ctx.font = font(C * 0.16 * (0.6 + 0.4 * grow));
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+    const text = `${called()}번!`;
+    ctx.lineWidth = C * 0.02; ctx.strokeStyle = '#fff'; ctx.strokeText(text, c, c);
+    ctx.fillStyle = '#E8403A'; ctx.fillText(text, c, c);
+    ctx.globalAlpha = 1;
+  }
+
+  // 번호를 부르기 전: 가운데 물음표가 두근두근
+  function drawWait() {
+    const { c, C, R } = geo();
+    const pulse = reduceMotion ? 1 : 1 + Math.sin(performance.now() / 140) * 0.07;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+    ctx.font = font(C * 0.15 * pulse);
+    ctx.lineWidth = C * 0.02; ctx.strokeStyle = '#fff'; ctx.strokeText('?', c, c);
+    ctx.fillStyle = '#16224A'; ctx.fillText('?', c, c);
+    const banner = g.banner.t > 0;
+    const top = banner ? g.banner.text : `${g.match.heat}회 · 몇 번을 부를까요?`;
+    fitText(top, R * 1.5, C * (banner ? 0.05 : 0.045));
+    ctx.lineWidth = C * 0.012; ctx.strokeStyle = '#fff'; ctx.strokeText(top, c, c - R * 0.37);
+    ctx.fillStyle = banner ? (g.banner.color === '#F5C21B' ? '#B88A00' : g.banner.color) : '#16224A';
+    ctx.fillText(top, c, c - R * 0.37);
+    const sub = '번호를 부르기 전에 누르면 실격!';
+    ctx.fillStyle = '#5A6689'; fitText(sub, R * 1.4, C * 0.034);
+    ctx.fillText(sub, c, c + R * 0.4);
+  }
+
+  // ---------- 번호판 ----------
+  // 번호를 부르면 우리 팀 대기 줄 위에 1~10 번호판이 떠요. 부른 번호를 누르면 그 선수가 나가요.
+  const pickers = {};
+  TEAMS.forEach(t => {
+    const el = document.createElement('div');
+    el.className = 'picker'; el.hidden = true;
+    el.style.setProperty('--c', t.color);
+    el.style.setProperty('--t', t.text);
+    el.setAttribute('role', 'group');
+    el.setAttribute('aria-label', `${t.name} 팀 선수 고르기`);
+    for (let k = 1; k <= LINE; k++) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.textContent = k;
+      b.setAttribute('aria-label', `${t.name} ${k}번 선수`);
+      b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); pick(t, k); });
+      b.addEventListener('click', e => { if (e.detail === 0) pick(t, k); });   // 키보드(Enter·Space)
+      b.addEventListener('contextmenu', e => e.preventDefault());
+      el.appendChild(b);
+    }
+    document.getElementById('stage').appendChild(el);
+    pickers[t.id] = el;
+  });
+
+  function pick(t, k) {
+    const st = g.state[t.id];
+    if (!st || !st.active || st.dq || st.picked) return;
+    if (g.phase === 'countdown') { early(t, st, g.pads[t.id]); return; }   // 부르기 전에 누름 = 선을 넘음 (규칙 ①)
+    if (g.phase !== 'race' || performance.now() < st.pickBlock) return;
+    const el = pickers[t.id];
+    if (k === called()) {
+      st.picked = true;
+      sfx.pick();
+      updatePads();
+      syncPickers();
+      return;
+    }
+    // 부른 번호가 아닌 선수가 나감 (규칙 ②)
+    el.classList.add('wrong');
+    setTimeout(() => el.classList.remove('wrong'), 500);
+    if (settings.strict) disqualify(t, `${called()}번 대신 ${k}번이 나감`);
+    else {
+      st.pickBlock = performance.now() + 900;
+      sfx.foul();
+      say(`${t.name}! ${k}번이 아니라 ${called()}번이에요`, t.color, 1.4);
+    }
+  }
+
+  function syncPickers() {
+    const now = performance.now();
+    TEAMS.forEach(t => {
+      const st = g.state[t.id], el = pickers[t.id];
+      const show = !!st && st.active && !st.dq && !st.picked && (g.phase === 'countdown' || g.phase === 'race');
+      if (el.hidden === show) el.hidden = !show;
+      el.classList.toggle('blocked', !!st && now < st.pickBlock);
+    });
+  }
+
+  // 번호판 자리: 우리 팀 대기 줄 위(출발 모서리 원반 바로 옆부터), 팀 쪽에서 똑바로 읽히게
+  function layoutPickers() {
+    const cv = document.getElementById('court');
+    const { C, m } = geo();
+    const bw = Math.round(Math.max(40, Math.min(64, C * 0.085)));
+    const h = bw * 2 + 4 + 12 + 6, w = bw * 5 + 16 + 12 + 6;
+    // 출발 모서리 원반을 가리지 않게: 번호판 오른쪽 끝(팀 쪽에서 볼 때)이 원반 바깥에서 시작해요
+    const f = (C * (DISC_IN + 0.024 + 0.035) + w / 2) / C;
+    TEAMS.forEach(t => {
+      const el = pickers[t.id];
+      el.style.setProperty('--b', bw + 'px');
+      const p = sidePt(t, f, m - h / 2);
+      el.style.left = (cv.offsetLeft + p.x) + 'px';
+      el.style.top = (cv.offsetTop + p.y) + 'px';
+      el.style.transform = `translate(-50%, -50%) rotate(${t.rot}deg)`;
+    });
+  }
+  addEventListener('resize', layoutPickers);
+
+  g.run();
+  layoutPickers();
+})();
+</script>
+<script>
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    addEventListener('load', () => navigator.serviceWorker.register('../sw.js', { scope: '../' }));
+  }
+</script>
+</body>
+</html>

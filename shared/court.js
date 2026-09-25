@@ -97,12 +97,17 @@ window.Court = (() => {
   //   points      등수별 점수 (기본 [400, 200])
   //   heatScore(t, st)  등수 대신 이 판에서 얻은 점수를 바로 줄 때 (컬링: 후프 안 100 · 닿으면 50)
   //   isOver()    경기가 끝났는지 (기본: 모든 팀이 끝나거나 실격). 한 팀만 이기면 끝나는 게임에서 써요
+  //   countdown() 3-2-1 대신 기다리는 시간(초)을 돌려줘요 (콩주머니 옮기기: 번호를 부를 때까지 두근두근)
+  //   drawWait(left)   countdown 을 쓸 때 가운데 그림,  waitPad  그동안 버튼 글자
+  //   early(t, st, el) 출발 전에 눌렀을 때 (기본: '아직이에요' 흔들기)
+  //   goText, idleText 는 함수여도 돼요 (그때그때 바뀌는 글자)
   function create(opts) {
     const settings = opts.settings;
     const points = opts.points || POINTS;
     const rankText = r => (r ? r + '등' : '—');   // 등수 없이 끝난 팀은 —
     const heatName = opts.heatName;
     const center = { top: 0.37, sub: 0.4, rank: 0.38, width: 1.6, subWidth: 1.4, ...opts.center };
+    const txt = v => (typeof v === 'function' ? v() : v);
 
     const stage = document.getElementById('stage');
     const canvas = document.getElementById('court');
@@ -312,7 +317,8 @@ window.Court = (() => {
     function startHeat() {
       resetState();
       introEl.hidden = true; resultEl.hidden = true;
-      g.phase = 'countdown'; g.countdownT = 3.999; g.lastCount = null;
+      g.phase = 'countdown'; g.countdownT = opts.countdown ? opts.countdown() : 3.999; g.lastCount = null;
+      updatePads();
       ac();
     }
 
@@ -320,6 +326,7 @@ window.Court = (() => {
     function padText(st) {
       if (st.dq) return '실격';
       if (st.rank) return st.rank + '등';
+      if (g.phase === 'countdown' && opts.waitPad) return opts.waitPad;
       if (g.phase !== 'race') return g.match.heat + heatName + ' 준비';
       return opts.padText(st);
     }
@@ -365,6 +372,7 @@ window.Court = (() => {
       clearTimeout(el._hit); el._hit = setTimeout(() => el.classList.remove('hit'), 70);
 
       if (g.phase === 'countdown') {
+        if (opts.early) { if (!st.dq) opts.early(t, st, el); return; }
         shakePad(el);
         sfx.foul();
         say(`${t.name}! 아직이에요`, t.color, 1.0);
@@ -469,11 +477,11 @@ window.Court = (() => {
       if (g.phase === 'countdown') {
         g.countdownT -= dt;
         const n = Math.ceil(g.countdownT);
-        if (n !== g.lastCount) { g.lastCount = n; if (n > 0) sfx.count(); }
+        if (n !== g.lastCount) { g.lastCount = n; if (n > 0 && !opts.countdown) sfx.count(); }
         if (g.countdownT <= 0) {
           g.phase = 'race';
           sfx.go();
-          say(`${g.match.heat}${heatName} ${opts.goText}`, '#16224A', 1.0);
+          say(`${g.match.heat}${heatName} ${txt(opts.goText)}`, '#16224A', 1.0);
           updatePads();
         }
       }
@@ -778,6 +786,7 @@ window.Court = (() => {
       const heat = g.match.heat;
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.lineJoin = 'round';
+      if (g.phase === 'countdown' && opts.drawWait) { opts.drawWait(g.countdownT); return; }
       if (g.phase === 'countdown') {
         const n = Math.ceil(g.countdownT);
         const frac = g.countdownT - Math.floor(g.countdownT);
@@ -793,7 +802,7 @@ window.Court = (() => {
       if (g.phase === 'race' || g.phase === 'over' || g.phase === 'result') {
         const banner = g.banner;
         const showBanner = banner.t > 0;
-        const text = showBanner ? banner.text : `${heat}${heatName} · ${opts.idleText}`;
+        const text = showBanner ? banner.text : `${heat}${heatName} · ${txt(opts.idleText)}`;
         fitText(text, R * center.width, C * (showBanner ? 0.052 : 0.042));
         if (showBanner) {
           ctx.lineWidth = C * 0.012; ctx.strokeStyle = '#fff'; ctx.strokeText(text, c, c - R * center.top);
@@ -852,7 +861,7 @@ window.Court = (() => {
       ac, tone, sfx,
       geo, at, pinOf, ringPinOf, boxR, BOX_H, cornerOf, finalPath, posOf, ringTeamAt,
       resetState, updatePads, refreshPad, say, shakePad, tapGap, burst, knockPin, slideFoul,
-      drawCourt, drawWaitBoxes, drawOnePin, drawRunner, drawCoach, warnLabel,
+      fitText, drawCourt, drawWaitBoxes, drawOnePin, drawRunner, drawCoach, warnLabel,
       run,
     });
   }
