@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>T&amp;T 볼 릴레이</title>
+<meta name="description" content="AWANA T&amp;T 볼 릴레이(2026 어와나 올림픽 규칙)를 옮긴 네 팀 게임: 다리 사이로 폼볼을 넘기고, 맨 뒤 선수가 맨 앞으로 달려가요">
+<meta name="theme-color" content="#16224A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="AWANA 게임">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" type="image/png" href="../icons/favicon.png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="preload" href="../fonts/jua.woff" as="font" type="font/woff" crossorigin>
+<link rel="stylesheet" href="../shared/court.css">
+<!-- 방문 통계 (GoatCounter: 쿠키·개인정보 없이 페이지별 방문 수만 셉니다) -->
+<script data-goatcounter="https://cjy1201.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</head>
+<body>
+
+<div id="stage">
+  <canvas id="court" aria-label="AWANA 게임 트랙"></canvas>
+
+  <button class="pad" data-team="red" aria-label="빨강 팀 버튼"><div class="pad-inner"><span class="pad-name">빨강</span><span class="pad-runners"></span><span class="pad-state">준비</span></div></button>
+  <button class="pad" data-team="blue" aria-label="파랑 팀 버튼"><div class="pad-inner"><span class="pad-name">파랑</span><span class="pad-runners"></span><span class="pad-state">준비</span></div></button>
+  <button class="pad" data-team="green" aria-label="초록 팀 버튼"><div class="pad-inner"><span class="pad-name">초록</span><span class="pad-runners"></span><span class="pad-state">준비</span></div></button>
+  <button class="pad" data-team="yellow" aria-label="노랑 팀 버튼"><div class="pad-inner"><span class="pad-name">노랑</span><span class="pad-runners"></span><span class="pad-state">준비</span></div></button>
+
+  <div id="tools">
+    <a class="tool" href="../" aria-label="게임 모음으로">← 게임 모음</a>
+    <button class="tool" id="helpBtn" type="button">게임 방법</button>
+    <button class="tool" id="soundBtn" type="button" aria-pressed="true">소리 켜짐</button>
+  </div>
+
+  <!-- 게임 방법 + 설정 -->
+  <div class="overlay" id="intro">
+    <div class="sheet">
+      <h1>T&amp;T<span class="stripe" aria-hidden="true"><b style="background:var(--red)"></b><b style="background:var(--blue)"></b><b style="background:var(--green)"></b><b style="background:var(--yellow)"></b></span>볼 릴레이</h1>
+      <p class="scoreline"><b>2개 조</b> (1조 No1~No5 · 2조 No6~No10) · 조마다 <b>1등 400점 · 2등 200점</b></p>
+
+      <div class="steps">
+        <div class="step">
+          <svg viewBox="0 0 96 96" aria-hidden="true">
+            <path d="M14 82 L82 14" stroke="#2F6FE4" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="70" cy="26" r="8" fill="#2F6FE4" stroke="#fff" stroke-width="2.5"/>
+            <circle cx="56" cy="40" r="7" fill="#2F6FE4" stroke="#fff" stroke-width="2.5"/>
+            <circle cx="44" cy="52" r="7" fill="#2F6FE4" stroke="#fff" stroke-width="2.5"/>
+            <circle cx="32" cy="64" r="7" fill="#2F6FE4" stroke="#fff" stroke-width="2.5"/>
+            <circle cx="20" cy="76" r="7" fill="#2F6FE4" stroke="#fff" stroke-width="2.5"/>
+            <circle cx="74" cy="12" r="6" fill="#F08A24" stroke="#16224A" stroke-width="2"/>
+          </svg>
+          <strong>대각선에 한 줄로</strong>
+          <span>가운데를 보고 다리를 벌려요.<br>맨 앞(ZONE 1)은 폼볼을 머리 위에</span>
+        </div>
+        <div class="step">
+          <svg viewBox="0 0 96 96" aria-hidden="true">
+            <circle cx="48" cy="48" r="30" fill="#E8403A"/>
+            <text x="48" y="56" text-anchor="middle" font-family="Jua, sans-serif" font-size="22" fill="#fff">톡!</text>
+            <circle cx="80" cy="18" r="8" fill="#F08A24" stroke="#16224A" stroke-width="2"/>
+            <path d="M66 24 q-8 4 -10 10" stroke="#16224A" stroke-width="2.5" fill="none" stroke-dasharray="3 3"/>
+          </svg>
+          <strong>공이 손에 닿으면 톡!</strong>
+          <span>다리 사이로 손에서 손으로 넘겨요.<br>날아가는 중에 누르면 놓쳐요</span>
+        </div>
+        <div class="step">
+          <svg viewBox="0 0 96 96" aria-hidden="true">
+            <path d="M14 82 L82 14" stroke="#1FA35A" stroke-width="4" stroke-linecap="round" opacity=".4"/>
+            <circle cx="24" cy="72" r="8" fill="#1FA35A" stroke="#fff" stroke-width="2.5"/>
+            <path d="M34 72 Q72 70 72 34" fill="none" stroke="#16224A" stroke-width="3" stroke-dasharray="5 5"/>
+            <path d="M72 34 l-5 7 M72 34 l6 6" stroke="#16224A" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="30" cy="64" r="5" fill="#F08A24" stroke="#16224A" stroke-width="1.5"/>
+          </svg>
+          <strong>맨 뒤는 맨 앞으로!</strong>
+          <span>ZONE 3 선수가 받으면 폼볼을 들고<br>톡톡 달려 ZONE 1 맨 앞으로 가요</span>
+        </div>
+        <div class="step">
+          <svg viewBox="0 0 96 96" aria-hidden="true">
+            <path d="M10 86 Q30 40 58 48" fill="none" stroke="#F5C21B" stroke-width="3.5" stroke-dasharray="5 5"/>
+            <circle cx="16" cy="78" r="9" fill="#F5C21B" stroke="#fff" stroke-width="3"/>
+            <text x="16" y="82" text-anchor="middle" font-family="Jua, sans-serif" font-size="11" fill="#16224A">1</text>
+            <g transform="translate(70 70) rotate(24)">
+              <path d="M0 -24 m-5 0 a5 5 0 1 0 10 0 a5 5 0 1 0 -10 0 M-3 -18 h6 l3 10 q4 8 1 16 h-14 q-3 -8 1 -16 z" fill="#fff" stroke="#16224A" stroke-width="2.5" stroke-linejoin="round"/>
+            </g>
+          </svg>
+          <strong>첫 선수가 다시 받으면 핀까지</strong>
+          <span>한 바퀴 돌아 첫 선수가 ZONE 3에서 받으면<br>폼볼을 든 채 가운데 종료 핀으로!</span>
+        </div>
+      </div>
+
+      <div class="foul">
+        <b>이러면 실격!</b>
+        <ul>
+          <li>ZONE 1 · 3 선수가 공을 넘길 때 선을 밟거나 넘으면</li>
+          <li>손에서 손으로 넘기지 않고 공을 굴리면 · 공은 모든 선수의 다리 사이로</li>
+          <li>공이 다른 팀 구역을 넘어가면 (땅에 닿는 건 괜찮아요)</li>
+          <li>종료 핀을 넘어뜨릴 때 폼볼을 손에 쥐고 있지 않으면</li>
+          <li>주고받다 놓치면 실격이 아니라 그 자리부터 다시 해요</li>
+        </ul>
+      </div>
+
+      <div class="settings">
+        <div class="row" role="group" aria-label="참가 팀">
+          <span class="lbl">참가 팀</span>
+          <button class="chip" type="button" data-pick="red" aria-pressed="true" style="--c:var(--red)">빨강</button>
+          <button class="chip" type="button" data-pick="blue" aria-pressed="true" style="--c:var(--blue)">파랑</button>
+          <button class="chip" type="button" data-pick="green" aria-pressed="true" style="--c:var(--green)">초록</button>
+          <button class="chip" type="button" data-pick="yellow" aria-pressed="true" style="--c:var(--yellow);--t:#16224A">노랑</button>
+        </div>
+        <div class="row" role="group" aria-label="조 편성">
+          <span class="lbl">경기</span>
+          <button class="chip" type="button" data-heats="2" aria-pressed="true">2개 조 (정식)</button>
+          <button class="chip" type="button" data-heats="1" aria-pressed="false">1개 조</button>
+        </div>
+        <div class="row" role="group" aria-label="놓침 난이도">
+          <span class="lbl">공 놓침</span>
+          <button class="chip" type="button" data-fumble="0" aria-pressed="false">쉬움</button>
+          <button class="chip" type="button" data-fumble="1" aria-pressed="true">보통</button>
+          <button class="chip" type="button" data-fumble="2" aria-pressed="false">어려움</button>
+        </div>
+      </div>
+
+      <button class="go" id="startBtn" type="button">시작하기</button>
+      <p class="keys">공이 손에 닿을 때마다 톡! · 맨 앞으로 갈 땐 톡톡 · 키보드 연습: 빨강 Q · 파랑 P · 초록 M · 노랑 Z</p>
+    </div>
+  </div>
+
+  <!-- 결과 -->
+  <div class="overlay" id="result" hidden>
+    <div class="sheet">
+      <h2 id="resultTitle">경기 결과</h2>
+      <div class="podium" id="podium"></div>
+      <div class="buttons">
+        <button class="go" id="nextBtn" type="button">다음</button>
+        <button class="go ghost" id="menuBtn" type="button">설정 바꾸기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../shared/court.js"></script>
+<script>
+(() => {
+  const { TAU, TEAMS, hexA, font } = Court;
+
+  // 한 줄 5명: 자리 0 = ZONE 1 (가운데 사각형 앞), 1~3 = ZONE 2, 4 = ZONE 3 (서클 라인)
+  const LINE = 5;
+  const PASS_TIME = 0.36;              // 공이 다리 사이로 뒤 친구에게 가는 시간(초)
+  // 공이 날아가는 앞부분(WAIT_PART)에 누르면 놓칠 수 있어요. 일찍 누를수록 잘 놓쳐요.
+  const WAIT_PART = 0.7;
+  const FUMBLE_CHANCE = [0.3, 0.55, 0.85];   // 쉬움 · 보통 · 어려움 (가장 이르게 눌렀을 때)
+  const FUMBLE_TIME = 1.4;             // 놓친 공을 주워 오는 시간(초) — 놓친 자리부터 다시
+  const SHIFT_TIME = 0.35;             // 맨 앞에 새 선수가 서면 나머지가 한 칸씩 뒤로
+  const DECAY = 1.6;
+  const VMAX = () => geo().C * 0.32;   // 달리기 최고 속도 (px/초)
+
+  const settings = { teams: new Set(['red', 'blue', 'green', 'yellow']), heats: 2, fumble: 1 };
+  const firstNo = () => (g.match.heat - 1) * LINE + 1;   // 1조 No1~5, 2조 No6~10
+
+  const g = Court.create({
+    settings, chips: ['heats', 'fumble'],
+    heatName: '조', goText: '시작!', idleText: '공이 닿으면 톡!', nextReady: '준비',
+    heatTitle: h => ` (No${(h - 1) * LINE + 1}~No${h * LINE})`,
+    resultSub: (t, h) => `${h.time.toFixed(1)}초 · 놓침 ${g.state[t.id].fumbles}번`,
+    center: { top: 0.72, sub: 0.72, rank: 0.72, width: 1.15, subWidth: 1.15 },   // 가운데는 줄 선 선수들 자리라 바깥쪽으로
+    teamState: () => ({
+      line: [],                   // 앞에서부터 선수 번호
+      holder: 0,                  // 공을 가진 자리 (0 = ZONE 1)
+      flight: 0, queued: false,   // 공이 다음 선수에게 가는 중 0..1
+      fumble: 0, fumbleSide: 1,   // 놓친 공 주워 오는 중 0..1
+      mode: 'pass',               // pass 넘기기 · rotate 맨 앞으로 · final 종료 핀으로
+      d: 0, v: 0, legPhase: 0, runner: 0,
+      shift: 1,                   // 한 칸씩 뒤로 물러나는 중 0..1
+      rot: 0,                     // 맨 앞으로 달려간 횟수
+      fumbles: 0,
+    }),
+    onReset: () => { pathCache = { key: '', paths: {} }; },
+    padText, padDots, tap, race, tick, draw,
+    progress: st => st.rot * (LINE + 1) + (st.mode === 'pass' ? st.holder + (st.flight || 0) : LINE) + (st.mode === 'final' ? 1 : 0),
+  });
+  const { ctx, sfx, tone, geo, at, pinOf, say, burst, updatePads, refreshPad,
+          drawOnePin, drawRunner, warnLabel } = g;
+  sfx.catch = n => tone(n * 1.5, 0.05, 'triangle', 0.06);
+
+  // 줄 순서는 조가 시작할 때 정해요
+  function lineOf(st) {
+    if (!st.line.length) for (let i = 0; i < LINE; i++) st.line.push(firstNo() + i);
+    return st.line;
+  }
+
+  // i번째 자리: 우리 팀 대각선 위, ZONE 1 은 가운데 사각형 바로 앞, ZONE 3 은 서클 라인
+  function spotOf(t, i) {
+    const { C, R, box } = geo();
+    const front = box * Math.SQRT2 + C * 0.035;
+    const back = R - C * 0.012;
+    return at(t.angle, front + (back - front) * i / (LINE - 1));
+  }
+  const ZONE_EDGES = () => {   // ZONE 1 | ZONE 2 | ZONE 3 경계 (대각선 위 거리)
+    const { C, R, box } = geo();
+    const front = box * Math.SQRT2 + C * 0.035, back = R - C * 0.012, step = (back - front) / (LINE - 1);
+    return [front + step * 0.5, back - step * 0.5];
+  };
+
+  // 달리는 길: 줄 옆으로 비켜서 (rotate: ZONE 3 → ZONE 1 앞, final: ZONE 3 → 종료 핀)
+  let pathCache = { key: '', paths: {} };
+  function pathOf(t, kind) {
+    const key = g.S + '';
+    if (pathCache.key !== key) pathCache = { key, paths: {} };
+    const id = t.id + kind;
+    if (pathCache.paths[id]) return pathCache.paths[id];
+    const { C } = geo();
+    const P0 = spotOf(t, LINE - 1);
+    const P2 = kind === 'final' ? at(t.angle + 0.18, C * 0.09) : spotOf(t, 0);
+    const side = t.angle + Math.PI / 2;
+    const bulge = kind === 'final' ? C * 0.08 : C * 0.07;
+    const mid = { x: (P0.x + P2.x) / 2 + Math.cos(side) * bulge, y: (P0.y + P2.y) / 2 + Math.sin(side) * bulge };
+    const pts = [];
+    for (let i = 0; i <= 24; i++) {
+      const u = i / 24, v = 1 - u;
+      pts.push({ x: v * v * P0.x + 2 * v * u * mid.x + u * u * P2.x, y: v * v * P0.y + 2 * v * u * mid.y + u * u * P2.y });
+    }
+    const len = [0];
+    for (let i = 1; i < pts.length; i++) len.push(len[i - 1] + Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y));
+    return (pathCache.paths[id] = { pts, len, L: len[len.length - 1] });
+  }
+  function runPos(t, kind, d) {
+    const { pts, len, L } = pathOf(t, kind);
+    d = Math.min(d, L);
+    let i = 1;
+    while (i < len.length - 1 && len[i] < d) i++;
+    const f = (d - len[i - 1]) / ((len[i] - len[i - 1]) || 1);
+    const a = pts[i - 1], b = pts[i];
+    return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f, dir: Math.atan2(b.y - a.y, b.x - a.x) };
+  }
+
+  // ---------- 버튼 ----------
+  function padText(st) {
+    if (st.mode === 'rotate') return '맨 앞으로!';
+    if (st.mode === 'final') return '핀까지!';
+    if (st.fumble) return '놓쳤어요';
+    if (st.flight && st.flight < WAIT_PART) return '기다려…';
+    return '톡!';
+  }
+  // 작은 동그라미: 맨 앞으로 달려간 선수 4명 + 마지막 종료 핀
+  function padDots(st) {
+    const dots = [];
+    for (let i = 0; i < LINE; i++) dots.push(i < st.rot || st.finished ? 'done' : (i === st.rot && g.phase === 'race' ? 'now' : ''));
+    return dots;
+  }
+
+  function tap(t, st, el) {
+    if (st.fumble) return;
+    if (!g.tapGap(st)) return;
+    if (st.mode !== 'pass') {                   // 맨 앞으로 · 종료 핀으로: 연타로 달리기
+      st.v = Math.min(VMAX(), st.v + VMAX() * 0.2);
+      sfx.tap(t.note);
+      return;
+    }
+    if (st.flight) {                            // 공이 날아가는 중
+      if (st.flight < WAIT_PART) {
+        const early = 1 - st.flight / WAIT_PART;
+        if (Math.random() < FUMBLE_CHANCE[settings.fumble] * (0.4 + 0.6 * early)) fumble(t);
+        else g.shakePad(el);                    // 아직이야!
+      } else st.queued = true;                  // 거의 닿았으면 닿자마자 넘겨요
+      return;
+    }
+    st.flight = 0.001;                          // 다리 사이로 뒤 친구에게
+    sfx.tap(t.note);
+  }
+
+  // ---------- 진행 ----------
+  function fumble(t) {
+    const st = g.state[t.id];
+    st.flight = 0; st.queued = false;
+    st.fumble = 0.001; st.fumbleSide = Math.random() < 0.5 ? 1 : -1;
+    st.fumbles++;
+    sfx.drop();
+    say(`${t.name} 공을 놓쳤어요! No${lineOf(st)[st.holder]}부터 다시`, t.color, 1.6);
+    updatePads();
+  }
+
+  function race(dt) {
+    for (const t of TEAMS) {
+      const st = g.state[t.id];
+      if (!st.active || st.finished || st.dq) continue;
+      const line = lineOf(st);
+
+      if (st.fumble) {                        // 놓친 공 주워 오기
+        st.fumble += dt / FUMBLE_TIME;
+        if (st.fumble >= 1) { st.fumble = 0; updatePads(); }
+        continue;
+      }
+      if (st.mode !== 'pass') {               // 달리기
+        const kind = st.mode;
+        st.v *= Math.exp(-DECAY * dt);
+        st.d += st.v * dt;
+        st.legPhase += st.v * dt * 0.14;
+        const L = pathOf(t, kind).L;
+        if (st.d >= L) {
+          st.d = L;
+          if (kind === 'final') { g.knockPin(t); continue; }
+          // 맨 앞(ZONE 1)에 도착: 나머지는 한 칸씩 뒤로, 공은 머리 위에서 다시 시작
+          line.unshift(line.pop());
+          st.rot++; st.mode = 'pass'; st.holder = 0; st.v = 0; st.shift = 0;
+          sfx.ok();
+          say(`${t.name} No${line[0]} 맨 앞에서 다시 시작!`, t.color, 1.2);
+          updatePads();
+        }
+        refreshPad(t);
+        continue;
+      }
+      if (st.flight) {                        // 공이 날아가는 중
+        st.flight += dt / PASS_TIME;
+        if (st.flight >= 1) {
+          st.flight = 0;
+          st.holder++;
+          sfx.catch(t.note);
+          if (st.holder === LINE - 1) {       // ZONE 3 선수가 받았어요
+            st.queued = false; st.d = 0; st.v = 0; st.runner = line[LINE - 1];
+            if (st.runner === firstNo()) {
+              st.mode = 'final';
+              sfx.last();
+              say(`${t.name} No${st.runner}가 다시 받았어요! 종료 핀까지`, t.color, 1.8);
+            } else {
+              st.mode = 'rotate';
+              sfx.pass();
+              say(`${t.name} No${st.runner} 맨 앞으로 달려!`, t.color, 1.3);
+            }
+            updatePads();
+            continue;
+          }
+          if (st.queued) { st.queued = false; st.flight = 0.001; }
+          updatePads();
+        }
+      }
+      refreshPad(t);
+    }
+  }
+
+  function tick(dt) {
+    TEAMS.forEach(t => {
+      const st = g.state[t.id];
+      if (st && st.shift < 1) st.shift = Math.min(1, st.shift + dt / SHIFT_TIME);
+    });
+  }
+
+  // ---------- 그리기 ----------
+  function draw(now) {
+    g.drawCourt({ track: drawZones });
+    drawPins(now);
+    drawTeams(now);
+  }
+
+  // ZONE 1 · 2 · 3 경계 (대각선을 가로지르는 짧은 선)
+  function drawZones(on) {
+    const { C } = geo();
+    const [e1, e2] = ZONE_EDGES();
+    TEAMS.forEach(t => {
+      if (!on(t)) return;
+      const n = t.angle + Math.PI / 2, w = C * 0.03;
+      [e1, e2].forEach(r => {
+        const p = at(t.angle, r);
+        ctx.strokeStyle = hexA(t.color, 0.9); ctx.lineWidth = Math.max(2, C * 0.005); ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(p.x - Math.cos(n) * w, p.y - Math.sin(n) * w); ctx.lineTo(p.x + Math.cos(n) * w, p.y + Math.sin(n) * w); ctx.stroke();
+      });
+    });
+  }
+
+  function drawPins(now) {
+    const { C } = geo();
+    TEAMS.forEach(t => {
+      const st = g.state[t.id];
+      if (!st || !st.active) return;
+      const p = pinOf(t);
+      const goal = g.phase === 'race' && !st.finished && st.mode === 'final';
+      drawOnePin(p.x, p.y, C * 0.075, t.color, st.pinFall, t.angle + Math.PI, goal ? hexA(t.color, 0.4) : null, now);
+    });
+  }
+
+  function drawBall(x, y, r) {
+    ctx.beginPath(); ctx.arc(x, y, r, 0, TAU);
+    ctx.fillStyle = '#F08A24'; ctx.fill();
+    ctx.lineWidth = Math.max(1.5, r * 0.22); ctx.strokeStyle = '#16224A'; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x - r, y); ctx.lineTo(x + r, y); ctx.moveTo(x, y - r); ctx.lineTo(x, y + r);
+    ctx.lineWidth = Math.max(1, r * 0.14); ctx.stroke();
+  }
+
+  function drawTeams(now) {
+    const { C, c } = geo();
+    const size = C * 0.022;
+    TEAMS.forEach(t => {
+      const st = g.state[t.id];
+      if (!st || !st.active) return;
+      const racing = g.phase === 'race';
+      const line = lineOf(st);
+      const running = st.mode !== 'pass';
+
+      // 한 줄로 선 선수들 (가운데를 봐요). 새로 맨 앞에 서면 나머지는 한 칸씩 뒤로 물러나요.
+      for (let i = LINE - 1; i >= 0; i--) {
+        if (running && i === LINE - 1) continue;   // 달려 나간 선수는 따로 그려요
+        let p = spotOf(t, i);
+        if (st.shift < 1 && i > 0) {
+          const q = spotOf(t, i - 1), u = st.shift;
+          p = { x: q.x + (p.x - q.x) * u, y: q.y + (p.y - q.y) * u };
+        }
+        const next = racing && !running && i === st.holder + 1;   // 공을 받을 친구
+        drawRunner(t, p.x, p.y, t.angle + Math.PI, size * (next ? 0.95 : 0.82), 0, { label: line[i], last: line[i] === firstNo() });
+        if (next && st.flight >= WAIT_PART) {
+          ctx.strokeStyle = '#1FA35A'; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.arc(p.x, p.y, size * 1.7, 0, TAU); ctx.stroke();
+        }
+      }
+
+      // 공
+      const r = size * 0.62;
+      if (running || st.finished) {
+        const kind = st.finished ? 'final' : st.mode;
+        const p = runPos(t, kind, st.d);
+        drawRunner(t, p.x, p.y, p.dir, size, st.legPhase, { moving: racing && st.v > 1, speed: st.v / VMAX(), label: st.runner, last: st.runner === firstNo() });
+        if (!st.finished) drawBall(p.x + Math.cos(p.dir) * size * 1.1, p.y + Math.sin(p.dir) * size * 1.1, r);
+      } else if (st.fumble) {
+        // 다리 사이에서 빠져나와 옆으로 굴러갔다가 주워 와요
+        const a = spotOf(t, st.holder), b = spotOf(t, st.holder + 1);
+        const side = t.angle + Math.PI / 2 * st.fumbleSide;
+        const out = Math.sin(Math.min(1, st.fumble) * Math.PI) * C * 0.08;
+        const mx = (a.x + b.x) / 2 + Math.cos(side) * out, my = (a.y + b.y) / 2 + Math.sin(side) * out;
+        drawBall(mx, my, r);
+        warnLabel(a.x + Math.cos(side) * C * 0.07, a.y + Math.sin(side) * C * 0.07, '놓쳤다!', false);
+      } else if (st.flight) {
+        // 다리 사이로: 가운데에서 작아졌다가 다시 커져요
+        const a = spotOf(t, st.holder), b = spotOf(t, st.holder + 1);
+        const u = Math.min(1, st.flight);
+        drawBall(a.x + (b.x - a.x) * u, a.y + (b.y - a.y) * u, r * (1 - 0.4 * Math.sin(u * Math.PI)));
+      } else {
+        const p = spotOf(t, st.holder);
+        const up = st.holder === 0 ? size * 1.5 : 0;                 // ZONE 1 선수는 공을 머리 위에
+        const back = st.holder === 0 ? 0 : size * 0.9;               // 다른 선수는 다리 뒤쪽에
+        drawBall(p.x + Math.cos(t.angle) * back, p.y + Math.sin(t.angle) * back - up, r * (st.holder === 0 ? 1.15 : 1));
+      }
+    });
+  }
+
+  g.run();
+})();
+</script>
+<script>
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    addEventListener('load', () => navigator.serviceWorker.register('../sw.js', { scope: '../' }));
+  }
+</script>
+</body>
+</html>
